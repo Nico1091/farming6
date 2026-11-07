@@ -105,13 +105,14 @@ code { font: 16px "Cascadia Mono", Consolas, monospace; color: var(--pino); back
   </svg>
   <div class="titulo">
     <h1>Su parte de Farming 6</h1>
-    <p>Ya está todo instalado. Faltan dos grabaciones: una en el código y otra en el programa. Mande el video lo más pronto posible para unirlo con la exposición.</p>
+    <p>La otra parte de la exposición ya está grabada: falta solo la suya. Son dos grabaciones, una en el código y otra en el programa. Mande su video lo más pronto posible para unirlo.</p>
     <p class="avance" id="avance" aria-live="polite">Marque cada paso. El sol sube a medida que avanza.</p>
   </div>
 </header>
 <main>
   <section>
     <h2>Antes de grabar</h2>
+    <p class="intro">La exposición completa tiene un máximo de 10 minutos y ya hay 4:45 grabados. Entre sus dos grabaciones no debe pasar de 5 minutos.</p>
     <p class="intro">El programa empieza sin datos, así que primero se crea el administrador.</p>
     <ol>
 <li><label><input type="checkbox" data-paso="a0"><span class="hacer">Abra Farming 6 desde la carpeta Farming 6 del Escritorio. La base empieza vacía.</span></label></li>
@@ -143,19 +144,19 @@ code { font: 16px "Cascadia Mono", Consolas, monospace; color: var(--pino); back
 <ol>
 <li><label><input type="checkbox" data-paso="c0-0"><span class="hacer">Deje VS Code abierto, con la cámara encendida.</span></label><p class="decir">Buenos días, mi nombre es [su nombre completo], del Equipo 10 de Ingeniería de Software III. Voy a explicar la gestión de perfiles, personas y usuarios de Farming 6.</p></li>
 </ol></section>
-<section class="bloque"><h3>Gestión Perfil</h3><p class="dura">Cerca de 30 segundos</p>
+<section class="bloque"><h3>Gestión Perfil</h3><p class="dura">Cerca de 25 segundos</p>
 <ol>
 <li><label><input type="checkbox" data-paso="c1-0"><span class="hacer">Pulse Ctrl+P, escriba lo de la derecha y pulse Enter.</span></label><span class="archivo"><code>validaciones/mod.rs:144</code><button type="button" class="copiar" data-texto="validaciones/mod.rs:144">Copiar</button></span><p class="decir">Esta función revisa la descripción del perfil. Si está vacía o tiene números no deja guardar, y el mensaje dice qué falló.</p></li>
 <li><label><input type="checkbox" data-paso="c1-1"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>ui/perfil.rs:89</code><button type="button" class="copiar" data-texto="ui/perfil.rs:89">Copiar</button></span><p class="decir">Aquí está la regla que protege el sistema: el perfil Administrador no se inhabilita, y un perfil con usuarios activos tampoco.</p></li>
 <li><label><input type="checkbox" data-paso="c1-2"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>db/mod.rs:147</code><button type="button" class="copiar" data-texto="db/mod.rs:147">Copiar</button></span><p class="decir">Al inhabilitar, esta función solo hace un UPDATE del campo estado, por lo cual ninguna fila se borra.</p></li>
 </ol></section>
-<section class="bloque"><h3>Gestión Persona</h3><p class="dura">Cerca de 30 segundos</p>
+<section class="bloque"><h3>Gestión Persona</h3><p class="dura">Cerca de 25 segundos</p>
 <ol>
 <li><label><input type="checkbox" data-paso="c2-0"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>validaciones/mod.rs:8</code><button type="button" class="copiar" data-texto="validaciones/mod.rs:8">Copiar</button></span><p class="decir">La identificación solo admite números y debe tener entre 6 y 12 dígitos.</p></li>
 <li><label><input type="checkbox" data-paso="c2-1"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>validaciones/mod.rs:62</code><button type="button" class="copiar" data-texto="validaciones/mod.rs:62">Copiar</button></span><p class="decir">El correo debe tener un formato válido, por ejemplo nombre@dominio.com.</p></li>
 <li><label><input type="checkbox" data-paso="c2-2"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>ui/persona.rs:169</code><button type="button" class="copiar" data-texto="ui/persona.rs:169">Copiar</button></span><p class="decir">Esta función valida los datos y revisa que el correo no esté repetido antes de escribir en la base.</p></li>
 </ol></section>
-<section class="bloque"><h3>Gestión Usuario y permisos</h3><p class="dura">Cerca de 30 segundos</p>
+<section class="bloque"><h3>Gestión Usuario y permisos</h3><p class="dura">Cerca de 25 segundos</p>
 <ol>
 <li><label><input type="checkbox" data-paso="c3-0"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>ui/usuario.rs:166</code><button type="button" class="copiar" data-texto="ui/usuario.rs:166">Copiar</button></span><p class="decir">El usuario se crea para una persona ya registrada. El idusuario es la misma identificación de la persona, así queda la relación uno a uno, y idperfil apunta al perfil escogido.</p></li>
 <li><label><input type="checkbox" data-paso="c3-1"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>ui/mod.rs:161</code><button type="button" class="copiar" data-texto="ui/mod.rs:161">Copiar</button></span><p class="decir">Esta función revisa el permiso antes de cambiar de pantalla. Perfiles, Usuarios y Base de datos son solo del Administrador, por lo cual no depende solamente de ocultar el botón.</p></li>
@@ -164,7 +165,7 @@ code { font: 16px "Cascadia Mono", Consolas, monospace; color: var(--pino); back
   <section>
     <h2>Grabación 2: el programa</h2>
     <p class="intro">Se graba en Farming 6, siguiendo los pasos en orden.</p>
-    <section class="bloque"><h3>Gestión Perfil</h3><p class="dura">Cerca de 55 segundos</p>
+    <section class="bloque"><h3>Gestión Perfil</h3><p class="dura">Cerca de 50 segundos</p>
 <p class="entrada">Ingrese como administrador y abra Perfiles. Ahora vamos con la parte visual.</p>
 <ol>
 <li><label><input type="checkbox" data-paso="v0-0"><span class="hacer">Pulse Crear y, con el campo vacío, pulse Guardar.</span></label><p class="decir">Sin descripción no deja guardar, y el mensaje dice qué falló.</p></li>
@@ -176,7 +177,7 @@ code { font: 16px "Cascadia Mono", Consolas, monospace; color: var(--pino); back
 <li><label><input type="checkbox" data-paso="v0-6"><span class="hacer">Abra Base de datos, pestaña perfil, y señale la fila.</span></label><p class="decir">Como podemos ver aquí, sigue en la base con estado I.</p></li>
 <li><label><input type="checkbox" data-paso="v0-7"><span class="hacer">Vuelva a Perfiles, seleccione Administrador y pulse Inhabilitar.</span></label><p class="decir">El perfil Administrador no se puede inhabilitar, evitando dejar el sistema sin administrador.</p></li>
 </ol></section>
-<section class="bloque"><h3>Gestión Persona</h3><p class="dura">Cerca de 55 segundos</p>
+<section class="bloque"><h3>Gestión Persona</h3><p class="dura">Cerca de 45 segundos</p>
 <p class="entrada">Abra Personas.</p>
 <ol>
 <li><label><input type="checkbox" data-paso="v1-0"><span class="hacer">Pulse Crear, escriba la identificación 12A y pulse Guardar.</span></label><p class="decir">Cada campo tiene su validación. La identificación solo admite números.</p></li>
@@ -186,7 +187,7 @@ code { font: 16px "Cascadia Mono", Consolas, monospace; color: var(--pino); back
 <li><label><input type="checkbox" data-paso="v1-4"><span class="hacer">Arriba escriba 123456 y pulse Consultar. Pulse Modificar, escriba la dirección Calle 10 y pulse Guardar.</span></label><p class="decir">Consultar trae el registro y Modificar actualiza la dirección.</p></li>
 <li><label><input type="checkbox" data-paso="v1-5"><span class="hacer">Abra Base de datos, pestaña persona, y señale la fila.</span></label><p class="decir">Aquí aparece la fila con lo que acabamos de digitar. La identificación es la llave primaria y el correo es único.</p></li>
 </ol></section>
-<section class="bloque"><h3>Gestión Usuario</h3><p class="dura">Cerca de 55 segundos</p>
+<section class="bloque"><h3>Gestión Usuario</h3><p class="dura">Cerca de 40 segundos</p>
 <p class="entrada">Abra Usuarios.</p>
 <ol>
 <li><label><input type="checkbox" data-paso="v2-0"><span class="hacer">Pulse Crear. Escoja a Ana Prueba y el perfil Campesino. Usuario anaprueba, contraseña campo. Pulse Guardar.</span></label><p class="decir">El usuario se crea para una persona ya registrada. La contraseña debe tener entre 8 y 64 caracteres.</p></li>
@@ -194,7 +195,7 @@ code { font: 16px "Cascadia Mono", Consolas, monospace; color: var(--pino); back
 <li><label><input type="checkbox" data-paso="v2-2"><span class="hacer">Arriba escriba anaprueba y pulse Consultar. Pulse Modificar, cambie el usuario a anaprueba1 y pulse Guardar.</span></label><p class="decir">Consultar y Modificar funcionan igual que en los otros formularios.</p></li>
 <li><label><input type="checkbox" data-paso="v2-3"><span class="hacer">Abra Base de datos, pestaña usuario, y señale la fila.</span></label><p class="decir">En la tabla podemos ver que la contraseña no queda en claro, y el idusuario es la misma identificación de la persona.</p></li>
 </ol></section>
-<section class="bloque"><h3>Permisos e inhabilitar</h3><p class="dura">Cerca de 60 segundos</p>
+<section class="bloque"><h3>Permisos e inhabilitar</h3><p class="dura">Cerca de 35 segundos</p>
 <ol>
 <li><label><input type="checkbox" data-paso="v3-0"><span class="hacer">Pulse Salir arriba a la derecha. Ingrese con anaprueba1 y Campo2026.</span></label><p class="decir">El perfil Administrador entra a todo. Cualquier otro perfil solo ve y modifica sus datos.</p></li>
 <li><label><input type="checkbox" data-paso="v3-1"><span class="hacer">Señale el menú: solo aparecen Panel y Mis datos. Abra Mis datos: no hay botón Inhabilitar.</span></label><p class="decir">Como podemos ver aquí, el menú solo tiene Panel y Mis datos.</p></li>

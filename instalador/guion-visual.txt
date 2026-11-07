@@ -1,12 +1,12 @@
 ﻿GUION DE LA PARTE VISUAL
 Farming 6, Equipo 10
 
-Se graba en Farming 6 con la cámara superpuesta. Dura cerca de 4 minutos.
+Esto es solo lo que usted debe hacer y decir. Se graba en Farming 6 con la cámara superpuesta. Dura cerca de 3 minutos.
 Antes de grabar debe existir el administrador: los pasos están en Indicaciones.txt.
 Si repite una toma con la misma base, cambie los datos o vuelva a empezar borrando farming6.db de la carpeta, con el programa cerrado.
 
 
-GESTIÓN PERFIL (cerca de 55 segundos)
+GESTIÓN PERFIL (cerca de 50 segundos)
     Ingrese como administrador y abra Perfiles. Ahora vamos con la parte visual.
 
 1. Haga: Pulse Crear y, con el campo vacío, pulse Guardar.
@@ -34,7 +34,7 @@ GESTIÓN PERFIL (cerca de 55 segundos)
    Diga: El perfil Administrador no se puede inhabilitar, evitando dejar el sistema sin administrador.
 
 
-GESTIÓN PERSONA (cerca de 55 segundos)
+GESTIÓN PERSONA (cerca de 45 segundos)
     Abra Personas.
 
 9. Haga: Pulse Crear, escriba la identificación 12A y pulse Guardar.
@@ -56,7 +56,7 @@ GESTIÓN PERSONA (cerca de 55 segundos)
    Diga: Aquí aparece la fila con lo que acabamos de digitar. La identificación es la llave primaria y el correo es único.
 
 
-GESTIÓN USUARIO (cerca de 55 segundos)
+GESTIÓN USUARIO (cerca de 40 segundos)
     Abra Usuarios.
 
 15. Haga: Pulse Crear. Escoja a Ana Prueba y el perfil Campesino. Usuario anaprueba, contraseña campo. Pulse Guardar.
@@ -72,7 +72,7 @@ GESTIÓN USUARIO (cerca de 55 segundos)
    Diga: En la tabla podemos ver que la contraseña no queda en claro, y el idusuario es la misma identificación de la persona.
 
 
-PERMISOS E INHABILITAR (cerca de 60 segundos)
+PERMISOS E INHABILITAR (cerca de 35 segundos)
 
 19. Haga: Pulse Salir arriba a la derecha. Ingrese con anaprueba1 y Campo2026.
    Diga: El perfil Administrador entra a todo. Cualquier otro perfil solo ve y modifica sus datos.

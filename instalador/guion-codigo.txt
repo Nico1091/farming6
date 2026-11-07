@@ -1,7 +1,7 @@
 ﻿GUION DE LA PARTE DE CÓDIGO
 Farming 6, Equipo 10
 
-Se graba en VS Code con la cámara superpuesta. Dura cerca de 2 minutos.
+Esto es solo lo que usted debe hacer y decir. Se graba en VS Code con la cámara superpuesta. Dura cerca de 1 minuto y 30 segundos.
 Con Ctrl+P se abre el buscador de archivos: escriba el texto indicado y pulse Enter para llegar a la línea exacta.
 
 
@@ -11,7 +11,7 @@ PRESENTACIÓN (cerca de 15 segundos)
    Diga: Buenos días, mi nombre es [su nombre completo], del Equipo 10 de Ingeniería de Software III. Voy a explicar la gestión de perfiles, personas y usuarios de Farming 6.
 
 
-GESTIÓN PERFIL (cerca de 30 segundos)
+GESTIÓN PERFIL (cerca de 25 segundos)
 
 2. Haga: Pulse Ctrl+P, escriba lo de la derecha y pulse Enter.
    Escriba en Ctrl+P: validaciones/mod.rs:144
@@ -26,7 +26,7 @@ GESTIÓN PERFIL (cerca de 30 segundos)
    Diga: Al inhabilitar, esta función solo hace un UPDATE del campo estado, por lo cual ninguna fila se borra.
 
 
-GESTIÓN PERSONA (cerca de 30 segundos)
+GESTIÓN PERSONA (cerca de 25 segundos)
 
 5. Haga: Pulse Ctrl+P y abra este archivo.
    Escriba en Ctrl+P: validaciones/mod.rs:8
@@ -41,7 +41,7 @@ GESTIÓN PERSONA (cerca de 30 segundos)
    Diga: Esta función valida los datos y revisa que el correo no esté repetido antes de escribir en la base.
 
 
-GESTIÓN USUARIO Y PERMISOS (cerca de 30 segundos)
+GESTIÓN USUARIO Y PERMISOS (cerca de 25 segundos)
 
 8. Haga: Pulse Ctrl+P y abra este archivo.
    Escriba en Ctrl+P: ui/usuario.rs:166
