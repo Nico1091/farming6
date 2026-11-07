@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Su parte de Farming 6</title>
+<style>
+:root {
+  --pino: #143b32;
+  --pino-medio: #1f5345;
+  --salvia: #5f8a78;
+  --niebla: #eef3ec;
+  --hoja: #dfe9dd;
+  --sol: #e5a433;
+  --tinta: #1b2e29;
+  --suave: #4e6960;
+  --aviso: #8a3f1d;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--niebla);
+  color: var(--tinta);
+  font: 17px/1.6 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+}
+.cielo { position: relative; height: 430px; background: var(--pino); overflow: hidden; }
+.cielo svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cielo .titulo { position: absolute; left: max(24px, calc(50% - 370px)); top: 54px; right: 24px; color: var(--niebla); }
+h1 {
+  margin: 0;
+  font: 300 clamp(44px, 8vw, 76px)/1.02 Bahnschrift, "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  letter-spacing: -.01em;
+}
+.titulo p { margin: 14px 0 0; max-width: 34em; color: #d3e3d9; font-size: 18px; }
+.avance { margin-top: 18px; color: #f2dcae; font-size: 15px; }
+main { max-width: 740px; margin: 0 auto; padding: 44px 24px 80px; }
+h2 {
+  margin: 64px 0 6px;
+  font: 400 34px/1.15 Bahnschrift, "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  color: var(--pino);
+}
+main > section:first-child h2 { margin-top: 0; }
+h3 { margin: 34px 0 0; font: 600 21px/1.3 "Segoe UI Variable Text", "Segoe UI", sans-serif; color: var(--pino-medio); }
+.dura { margin: 0; color: var(--suave); font-size: 15px; }
+.entrada { margin: 8px 0 0; color: var(--suave); }
+.intro { margin: 0 0 8px; color: var(--suave); }
+ol { list-style: none; margin: 14px 0 0; padding: 0; }
+li { margin: 0 0 20px; }
+label { display: grid; grid-template-columns: 30px 1fr; gap: 6px; cursor: pointer; align-items: start; }
+input[type=checkbox] {
+  width: 21px; height: 21px; margin: 4px 0 0;
+  accent-color: var(--pino-medio);
+  cursor: pointer;
+}
+input:checked + .hacer { color: var(--suave); }
+.hacer { font-weight: 600; }
+.detalle { margin: 2px 0 0 36px; color: var(--suave); }
+.decir { margin: 6px 0 0 36px; color: var(--tinta); }
+.decir::before { content: "Diga: "; color: var(--salvia); }
+.archivo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 6px 0 0 36px; }
+code { font: 16px "Cascadia Mono", Consolas, monospace; color: var(--pino); background: var(--hoja); padding: 2px 7px; border-radius: 4px; }
+.copiar {
+  font: inherit; font-size: 14px; color: var(--pino-medio); background: none;
+  border: 0; padding: 2px 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
+.superponer {
+  margin: 26px 0 0;
+  padding: 22px 24px;
+  background: var(--pino);
+  color: var(--niebla);
+  border-radius: 6px;
+  font-size: 19px;
+  line-height: 1.5;
+}
+.superponer strong { color: #f3c063; font-weight: 600; }
+.consejos { margin: 14px 0 0; padding-left: 20px; list-style: disc; }
+.consejos li { margin: 0 0 8px; }
+.final { margin-top: 40px; color: var(--pino-medio); font-size: 19px; }
+:focus-visible { outline: 3px solid var(--sol); outline-offset: 3px; border-radius: 3px; }
+@media (max-width: 560px) {
+  .cielo { height: 390px; }
+  .cielo .titulo { top: 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  #sol { transition: none !important; }
+}
+@media print {
+  .cielo { height: auto; background: none; }
+  .cielo svg { display: none; }
+  .cielo .titulo { position: static; color: var(--tinta); padding: 20px; }
+  .copiar { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="cielo">
+  <svg viewBox="0 0 1200 430" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <circle id="sol" cx="150" cy="330" r="52" fill="#e5a433" style="transition: cx 900ms ease, cy 900ms ease"></circle>
+    <path fill="#2d6b59" d="M0 360 C 240 330 420 300 640 250 S 1040 120 1200 80 V430 H0Z"></path>
+    <path fill="#3f8570" d="M0 400 C 280 390 520 370 760 310 S 1080 200 1200 170 V430 H0Z"></path>
+    <path fill="#1f5345" d="M0 425 C 320 425 640 415 880 370 S 1120 300 1200 285 V430 H0Z"></path>
+  </svg>
+  <div class="titulo">
+    <h1>Su parte de Farming 6</h1>
+    <p>Ya está todo instalado. Faltan dos grabaciones: una en el código y otra en el programa. Mande el video lo más pronto posible para unirlo con la exposición.</p>
+    <p class="avance" id="avance" aria-live="polite">Marque cada paso. El sol sube a medida que avanza.</p>
+  </div>
+</header>
+<main>
+  <section>
+    <h2>Antes de grabar</h2>
+    <p class="intro">El programa empieza sin datos, así que primero se crea el administrador.</p>
+    <ol>
+<li><label><input type="checkbox" data-paso="a0"><span class="hacer">Abra Farming 6 desde la carpeta Farming 6 del Escritorio. La base empieza vacía.</span></label></li>
+<li><label><input type="checkbox" data-paso="a1"><span class="hacer">Pulse Registro y cree la primera cuenta, que queda como administrador. Esto no se graba.</span></label><p class="detalle">Identificación 900100. Primer nombre Administrador. Primer apellido Equipo. Deje la fecha vacía y pulse Siguiente.</p></li>
+<li><label><input type="checkbox" data-paso="a2"><span class="hacer">Complete el segundo paso y pulse Siguiente.</span></label><p class="detalle">Móvil 3000000001. Correo admin@ejemplo.com. Dirección Calle 1.</p></li>
+<li><label><input type="checkbox" data-paso="a3"><span class="hacer">Complete el tercer paso, Su acceso al sistema.</span></label><p class="detalle">Usuario admin.equipo. La contraseña la escoge usted: de 8 a 64 caracteres, con mayúscula, minúscula y número. Anótela.</p></li>
+<li><label><input type="checkbox" data-paso="a4"><span class="hacer">Ingrese con ese usuario para comprobar que entra, y luego pulse Salir arriba a la derecha.</span></label></li>
+<li><label><input type="checkbox" data-paso="a5"><span class="hacer">Lea los dos guiones una vez y ensaye en voz alta.</span></label></li>
+</ol>
+  </section>
+  <section>
+    <h2>Cómo grabar</h2>
+    <ol>
+<li><label><input type="checkbox" data-paso="g0"><span class="hacer">Abra Clipchamp. Si le pide cuenta, entre con una cuenta personal de Microsoft.</span></label></li>
+<li><label><input type="checkbox" data-paso="g1"><span class="hacer">Pulse Crear un video nuevo. A la izquierda busque Grabar y crear, y escoja Pantalla y cámara.</span></label></li>
+<li><label><input type="checkbox" data-paso="g2"><span class="hacer">Permita el micrófono y la cámara. Escoja Toda la pantalla para que se vean VS Code y Farming 6.</span></label></li>
+<li><label><input type="checkbox" data-paso="g3"><span class="hacer">Pulse grabar. Al terminar, escoja Guardar y editar.</span></label></li>
+<li><label><input type="checkbox" data-paso="g4"><span class="hacer">Compruebe que su cámara queda superpuesta encima de la pantalla, en un recuadro, durante toda la grabación.</span></label></li>
+<li><label><input type="checkbox" data-paso="g5"><span class="hacer">Exporte el video en 1080p. Clipchamp deja los archivos en la carpeta Descargas.</span></label></li>
+</ol>
+    <p class="superponer"><strong>Muy importante.</strong> La cámara debe ir superpuesta sobre la pantalla para que usted se vea todo el tiempo. Quien no aparece con su rostro en el video saca 0,0.</p>
+    <h3>Para que quede bien</h3>
+    <ul class="consejos"><li>Siéntese a un brazo de distancia: se le debe ver toda la cabeza, sin que la corte el borde de la cámara.</li><li>Hable despacio, con voz tranquila y sin leer de corrido.</li><li>No se toque la cara ni pase las manos frente a la cámara.</li><li>Si se equivoca, haga una pausa de dos segundos y repita la frase completa. Eso se corrige en la edición.</li><li>No diga números de línea ni frases como entramos al archivo.</li><li>Use solo los datos de ejemplo de este guion. No muestre su correo ni datos personales.</li><li>Grabe en un lugar callado y silencie las notificaciones del PC y del celular.</li></ul>
+  </section>
+  <section>
+    <h2>Grabación 1: el código</h2>
+    <p class="intro">Se graba en VS Code. Con Ctrl+P se abre el buscador de archivos: pegue el texto y pulse Enter para llegar a la línea exacta.</p>
+    <section class="bloque"><h3>Presentación</h3><p class="dura">Cerca de 15 segundos</p>
+<ol>
+<li><label><input type="checkbox" data-paso="c0-0"><span class="hacer">Deje VS Code abierto, con la cámara encendida.</span></label><p class="decir">Buenos días, mi nombre es [su nombre completo], del Equipo 10 de Ingeniería de Software III. Voy a explicar la gestión de perfiles, personas y usuarios de Farming 6.</p></li>
+</ol></section>
+<section class="bloque"><h3>Gestión Perfil</h3><p class="dura">Cerca de 30 segundos</p>
+<ol>
+<li><label><input type="checkbox" data-paso="c1-0"><span class="hacer">Pulse Ctrl+P, escriba lo de la derecha y pulse Enter.</span></label><span class="archivo"><code>validaciones/mod.rs:144</code><button type="button" class="copiar" data-texto="validaciones/mod.rs:144">Copiar</button></span><p class="decir">Esta función revisa la descripción del perfil. Si está vacía o tiene números no deja guardar, y el mensaje dice qué falló.</p></li>
+<li><label><input type="checkbox" data-paso="c1-1"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>ui/perfil.rs:89</code><button type="button" class="copiar" data-texto="ui/perfil.rs:89">Copiar</button></span><p class="decir">Aquí está la regla que protege el sistema: el perfil Administrador no se inhabilita, y un perfil con usuarios activos tampoco.</p></li>
+<li><label><input type="checkbox" data-paso="c1-2"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>db/mod.rs:147</code><button type="button" class="copiar" data-texto="db/mod.rs:147">Copiar</button></span><p class="decir">Al inhabilitar, esta función solo hace un UPDATE del campo estado, por lo cual ninguna fila se borra.</p></li>
+</ol></section>
+<section class="bloque"><h3>Gestión Persona</h3><p class="dura">Cerca de 30 segundos</p>
+<ol>
+<li><label><input type="checkbox" data-paso="c2-0"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>validaciones/mod.rs:8</code><button type="button" class="copiar" data-texto="validaciones/mod.rs:8">Copiar</button></span><p class="decir">La identificación solo admite números y debe tener entre 6 y 12 dígitos.</p></li>
+<li><label><input type="checkbox" data-paso="c2-1"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>validaciones/mod.rs:62</code><button type="button" class="copiar" data-texto="validaciones/mod.rs:62">Copiar</button></span><p class="decir">El correo debe tener un formato válido, por ejemplo nombre@dominio.com.</p></li>
+<li><label><input type="checkbox" data-paso="c2-2"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>ui/persona.rs:169</code><button type="button" class="copiar" data-texto="ui/persona.rs:169">Copiar</button></span><p class="decir">Esta función valida los datos y revisa que el correo no esté repetido antes de escribir en la base.</p></li>
+</ol></section>
+<section class="bloque"><h3>Gestión Usuario y permisos</h3><p class="dura">Cerca de 30 segundos</p>
+<ol>
+<li><label><input type="checkbox" data-paso="c3-0"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>ui/usuario.rs:166</code><button type="button" class="copiar" data-texto="ui/usuario.rs:166">Copiar</button></span><p class="decir">El usuario se crea para una persona ya registrada. El idusuario es la misma identificación de la persona, así queda la relación uno a uno, y idperfil apunta al perfil escogido.</p></li>
+<li><label><input type="checkbox" data-paso="c3-1"><span class="hacer">Pulse Ctrl+P y abra este archivo.</span></label><span class="archivo"><code>ui/mod.rs:161</code><button type="button" class="copiar" data-texto="ui/mod.rs:161">Copiar</button></span><p class="decir">Esta función revisa el permiso antes de cambiar de pantalla. Perfiles, Usuarios y Base de datos son solo del Administrador, por lo cual no depende solamente de ocultar el botón.</p></li>
+</ol></section>
+  </section>
+  <section>
+    <h2>Grabación 2: el programa</h2>
+    <p class="intro">Se graba en Farming 6, siguiendo los pasos en orden.</p>
+    <section class="bloque"><h3>Gestión Perfil</h3><p class="dura">Cerca de 55 segundos</p>
+<p class="entrada">Ingrese como administrador y abra Perfiles. Ahora vamos con la parte visual.</p>
+<ol>
+<li><label><input type="checkbox" data-paso="v0-0"><span class="hacer">Pulse Crear y, con el campo vacío, pulse Guardar.</span></label><p class="decir">Sin descripción no deja guardar, y el mensaje dice qué falló.</p></li>
+<li><label><input type="checkbox" data-paso="v0-1"><span class="hacer">Escriba Comprador1 y pulse Guardar.</span></label><p class="decir">Con números tampoco, porque la descripción solo admite letras.</p></li>
+<li><label><input type="checkbox" data-paso="v0-2"><span class="hacer">Cambie a Comprador y pulse Guardar.</span></label><p class="decir">Con letras sí queda guardado.</p></li>
+<li><label><input type="checkbox" data-paso="v0-3"><span class="hacer">Arriba escriba Comprador y pulse Consultar.</span></label><p class="decir">Consultar encuentra el perfil.</p></li>
+<li><label><input type="checkbox" data-paso="v0-4"><span class="hacer">Pulse Modificar, cambie a Compradores y pulse Guardar.</span></label><p class="decir">Modificar actualiza la descripción.</p></li>
+<li><label><input type="checkbox" data-paso="v0-5"><span class="hacer">Seleccione Compradores en la lista, pulse Inhabilitar y confirme con Inhabilitar.</span></label><p class="decir">Al inhabilitar, el perfil no se borra.</p></li>
+<li><label><input type="checkbox" data-paso="v0-6"><span class="hacer">Abra Base de datos, pestaña perfil, y señale la fila.</span></label><p class="decir">Como podemos ver aquí, sigue en la base con estado I.</p></li>
+<li><label><input type="checkbox" data-paso="v0-7"><span class="hacer">Vuelva a Perfiles, seleccione Administrador y pulse Inhabilitar.</span></label><p class="decir">El perfil Administrador no se puede inhabilitar, evitando dejar el sistema sin administrador.</p></li>
+</ol></section>
+<section class="bloque"><h3>Gestión Persona</h3><p class="dura">Cerca de 55 segundos</p>
+<p class="entrada">Abra Personas.</p>
+<ol>
+<li><label><input type="checkbox" data-paso="v1-0"><span class="hacer">Pulse Crear, escriba la identificación 12A y pulse Guardar.</span></label><p class="decir">Cada campo tiene su validación. La identificación solo admite números.</p></li>
+<li><label><input type="checkbox" data-paso="v1-1"><span class="hacer">Corrija a 123456. Primer nombre Ana, primer apellido Prueba, móvil 12345. Pulse Guardar.</span></label><p class="decir">El móvil debe tener 10 dígitos e iniciar en 3.</p></li>
+<li><label><input type="checkbox" data-paso="v1-2"><span class="hacer">Corrija el móvil a 3001234567, escriba el correo ana.prueba y pulse Guardar.</span></label><p class="decir">El correo debe tener un formato válido.</p></li>
+<li><label><input type="checkbox" data-paso="v1-3"><span class="hacer">Corrija a ana.prueba@ejemplo.com y pulse Guardar.</span></label><p class="decir">Una vez pasan las validaciones, los datos llegan a la tabla persona.</p></li>
+<li><label><input type="checkbox" data-paso="v1-4"><span class="hacer">Arriba escriba 123456 y pulse Consultar. Pulse Modificar, escriba la dirección Calle 10 y pulse Guardar.</span></label><p class="decir">Consultar trae el registro y Modificar actualiza la dirección.</p></li>
+<li><label><input type="checkbox" data-paso="v1-5"><span class="hacer">Abra Base de datos, pestaña persona, y señale la fila.</span></label><p class="decir">Aquí aparece la fila con lo que acabamos de digitar. La identificación es la llave primaria y el correo es único.</p></li>
+</ol></section>
+<section class="bloque"><h3>Gestión Usuario</h3><p class="dura">Cerca de 55 segundos</p>
+<p class="entrada">Abra Usuarios.</p>
+<ol>
+<li><label><input type="checkbox" data-paso="v2-0"><span class="hacer">Pulse Crear. Escoja a Ana Prueba y el perfil Campesino. Usuario anaprueba, contraseña campo. Pulse Guardar.</span></label><p class="decir">El usuario se crea para una persona ya registrada. La contraseña debe tener entre 8 y 64 caracteres.</p></li>
+<li><label><input type="checkbox" data-paso="v2-1"><span class="hacer">Cambie la contraseña a Campo2026 y pulse Guardar.</span></label><p class="decir">Con mayúscula, minúscula y número queda guardado.</p></li>
+<li><label><input type="checkbox" data-paso="v2-2"><span class="hacer">Arriba escriba anaprueba y pulse Consultar. Pulse Modificar, cambie el usuario a anaprueba1 y pulse Guardar.</span></label><p class="decir">Consultar y Modificar funcionan igual que en los otros formularios.</p></li>
+<li><label><input type="checkbox" data-paso="v2-3"><span class="hacer">Abra Base de datos, pestaña usuario, y señale la fila.</span></label><p class="decir">En la tabla podemos ver que la contraseña no queda en claro, y el idusuario es la misma identificación de la persona.</p></li>
+</ol></section>
+<section class="bloque"><h3>Permisos e inhabilitar</h3><p class="dura">Cerca de 60 segundos</p>
+<ol>
+<li><label><input type="checkbox" data-paso="v3-0"><span class="hacer">Pulse Salir arriba a la derecha. Ingrese con anaprueba1 y Campo2026.</span></label><p class="decir">El perfil Administrador entra a todo. Cualquier otro perfil solo ve y modifica sus datos.</p></li>
+<li><label><input type="checkbox" data-paso="v3-1"><span class="hacer">Señale el menú: solo aparecen Panel y Mis datos. Abra Mis datos: no hay botón Inhabilitar.</span></label><p class="decir">Como podemos ver aquí, el menú solo tiene Panel y Mis datos.</p></li>
+<li><label><input type="checkbox" data-paso="v3-2"><span class="hacer">Pulse Salir e ingrese como administrador. En Personas seleccione a Ana Prueba, pulse Inhabilitar y confirme con Inhabilitar.</span></label><p class="decir">Ahora inhabilitamos a esta persona.</p></li>
+<li><label><input type="checkbox" data-paso="v3-3"><span class="hacer">Pulse Salir e intente ingresar con anaprueba1 y Campo2026.</span></label><p class="decir">Como podemos ver, ya no puede ingresar, pese a que su registro sigue en la base. Muchas gracias.</p></li>
+</ol></section>
+  </section>
+  <section>
+    <h2>Cuando termine</h2>
+    <ol>
+<li><label><input type="checkbox" data-paso="e0"><span class="hacer">Grabe primero la parte de código y luego la parte visual. Son dos grabaciones.</span></label></li>
+<li><label><input type="checkbox" data-paso="e1"><span class="hacer">Envíe lo más pronto posible el video exportado de cada grabación.</span></label></li>
+<li><label><input type="checkbox" data-paso="e2"><span class="hacer">Envíe también los archivos de Descargas que terminan en Screen y en Webcam. Sirven para la edición final.</span></label></li>
+<li><label><input type="checkbox" data-paso="e3"><span class="hacer">Si pesan mucho para WhatsApp, súbalos a Google Drive y comparta el enlace con cualquier persona que lo tenga.</span></label></li>
+</ol>
+    <p class="final" id="final" hidden>Todo listo. Gracias por apoyar con esto.</p>
+  </section>
+</main>
+<script>
+(function () {
+  var cajas = Array.prototype.slice.call(document.querySelectorAll('input[data-paso]'));
+  var sol = document.getElementById('sol');
+  var avance = document.getElementById('avance');
+  var fin = document.getElementById('final');
+  var clave = 'farming6-pasos';
+  var hechos = {};
+  try { hechos = JSON.parse(localStorage.getItem(clave)) || {}; } catch (e) { hechos = {}; }
+
+  function pintar() {
+    var n = cajas.filter(function (c) { return c.checked; }).length;
+    var p = cajas.length ? n / cajas.length : 0;
+    // El sol recorre el cielo desde detrás de las lomas hasta lo alto.
+    sol.setAttribute('cx', String(150 + 880 * p));
+    sol.setAttribute('cy', String(330 - 250 * Math.sin(p * Math.PI / 2)));
+    sol.style.cx = (150 + 880 * p) + 'px';
+    sol.style.cy = (330 - 250 * Math.sin(p * Math.PI / 2)) + 'px';
+    avance.textContent = n === 0
+      ? 'Marque cada paso. El sol sube a medida que avanza.'
+      : n + ' de ' + cajas.length + ' pasos hechos.';
+    fin.hidden = n !== cajas.length;
+  }
+
+  cajas.forEach(function (c) {
+    c.checked = !!hechos[c.dataset.paso];
+    c.addEventListener('change', function () {
+      hechos[c.dataset.paso] = c.checked;
+      try { localStorage.setItem(clave, JSON.stringify(hechos)); } catch (e) {}
+      pintar();
+    });
+  });
+
+  document.querySelectorAll('.copiar').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var t = b.getAttribute('data-texto');
+      function listo() {
+        b.textContent = 'Copiado';
+        setTimeout(function () { b.textContent = 'Copiar'; }, 1500);
+      }
+      function aMano() {
+        var a = document.createElement('textarea');
+        a.value = t;
+        document.body.appendChild(a);
+        a.select();
+        try { document.execCommand('copy'); listo(); } catch (e) {}
+        a.remove();
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(t).then(listo, aMano);
+      } else {
+        aMano();
+      }
+    });
+  });
+  pintar();
+})();
+</script>
+</body>
+</html>

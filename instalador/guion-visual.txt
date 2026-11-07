@@ -1,0 +1,88 @@
+﻿GUION DE LA PARTE VISUAL
+Farming 6, Equipo 10
+
+Se graba en Farming 6 con la cámara superpuesta. Dura cerca de 4 minutos.
+Antes de grabar debe existir el administrador: los pasos están en Indicaciones.txt.
+Si repite una toma con la misma base, cambie los datos o vuelva a empezar borrando farming6.db de la carpeta, con el programa cerrado.
+
+
+GESTIÓN PERFIL (cerca de 55 segundos)
+    Ingrese como administrador y abra Perfiles. Ahora vamos con la parte visual.
+
+1. Haga: Pulse Crear y, con el campo vacío, pulse Guardar.
+   Diga: Sin descripción no deja guardar, y el mensaje dice qué falló.
+
+2. Haga: Escriba Comprador1 y pulse Guardar.
+   Diga: Con números tampoco, porque la descripción solo admite letras.
+
+3. Haga: Cambie a Comprador y pulse Guardar.
+   Diga: Con letras sí queda guardado.
+
+4. Haga: Arriba escriba Comprador y pulse Consultar.
+   Diga: Consultar encuentra el perfil.
+
+5. Haga: Pulse Modificar, cambie a Compradores y pulse Guardar.
+   Diga: Modificar actualiza la descripción.
+
+6. Haga: Seleccione Compradores en la lista, pulse Inhabilitar y confirme con Inhabilitar.
+   Diga: Al inhabilitar, el perfil no se borra.
+
+7. Haga: Abra Base de datos, pestaña perfil, y señale la fila.
+   Diga: Como podemos ver aquí, sigue en la base con estado I.
+
+8. Haga: Vuelva a Perfiles, seleccione Administrador y pulse Inhabilitar.
+   Diga: El perfil Administrador no se puede inhabilitar, evitando dejar el sistema sin administrador.
+
+
+GESTIÓN PERSONA (cerca de 55 segundos)
+    Abra Personas.
+
+9. Haga: Pulse Crear, escriba la identificación 12A y pulse Guardar.
+   Diga: Cada campo tiene su validación. La identificación solo admite números.
+
+10. Haga: Corrija a 123456. Primer nombre Ana, primer apellido Prueba, móvil 12345. Pulse Guardar.
+   Diga: El móvil debe tener 10 dígitos e iniciar en 3.
+
+11. Haga: Corrija el móvil a 3001234567, escriba el correo ana.prueba y pulse Guardar.
+   Diga: El correo debe tener un formato válido.
+
+12. Haga: Corrija a ana.prueba@ejemplo.com y pulse Guardar.
+   Diga: Una vez pasan las validaciones, los datos llegan a la tabla persona.
+
+13. Haga: Arriba escriba 123456 y pulse Consultar. Pulse Modificar, escriba la dirección Calle 10 y pulse Guardar.
+   Diga: Consultar trae el registro y Modificar actualiza la dirección.
+
+14. Haga: Abra Base de datos, pestaña persona, y señale la fila.
+   Diga: Aquí aparece la fila con lo que acabamos de digitar. La identificación es la llave primaria y el correo es único.
+
+
+GESTIÓN USUARIO (cerca de 55 segundos)
+    Abra Usuarios.
+
+15. Haga: Pulse Crear. Escoja a Ana Prueba y el perfil Campesino. Usuario anaprueba, contraseña campo. Pulse Guardar.
+   Diga: El usuario se crea para una persona ya registrada. La contraseña debe tener entre 8 y 64 caracteres.
+
+16. Haga: Cambie la contraseña a Campo2026 y pulse Guardar.
+   Diga: Con mayúscula, minúscula y número queda guardado.
+
+17. Haga: Arriba escriba anaprueba y pulse Consultar. Pulse Modificar, cambie el usuario a anaprueba1 y pulse Guardar.
+   Diga: Consultar y Modificar funcionan igual que en los otros formularios.
+
+18. Haga: Abra Base de datos, pestaña usuario, y señale la fila.
+   Diga: En la tabla podemos ver que la contraseña no queda en claro, y el idusuario es la misma identificación de la persona.
+
+
+PERMISOS E INHABILITAR (cerca de 60 segundos)
+
+19. Haga: Pulse Salir arriba a la derecha. Ingrese con anaprueba1 y Campo2026.
+   Diga: El perfil Administrador entra a todo. Cualquier otro perfil solo ve y modifica sus datos.
+
+20. Haga: Señale el menú: solo aparecen Panel y Mis datos. Abra Mis datos: no hay botón Inhabilitar.
+   Diga: Como podemos ver aquí, el menú solo tiene Panel y Mis datos.
+
+21. Haga: Pulse Salir e ingrese como administrador. En Personas seleccione a Ana Prueba, pulse Inhabilitar y confirme con Inhabilitar.
+   Diga: Ahora inhabilitamos a esta persona.
+
+22. Haga: Pulse Salir e intente ingresar con anaprueba1 y Campo2026.
+   Diga: Como podemos ver, ya no puede ingresar, pese a que su registro sigue en la base. Muchas gracias.
+

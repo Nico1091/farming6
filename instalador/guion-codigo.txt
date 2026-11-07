@@ -1,0 +1,53 @@
+﻿GUION DE LA PARTE DE CÓDIGO
+Farming 6, Equipo 10
+
+Se graba en VS Code con la cámara superpuesta. Dura cerca de 2 minutos.
+Con Ctrl+P se abre el buscador de archivos: escriba el texto indicado y pulse Enter para llegar a la línea exacta.
+
+
+PRESENTACIÓN (cerca de 15 segundos)
+
+1. Haga: Deje VS Code abierto, con la cámara encendida.
+   Diga: Buenos días, mi nombre es [su nombre completo], del Equipo 10 de Ingeniería de Software III. Voy a explicar la gestión de perfiles, personas y usuarios de Farming 6.
+
+
+GESTIÓN PERFIL (cerca de 30 segundos)
+
+2. Haga: Pulse Ctrl+P, escriba lo de la derecha y pulse Enter.
+   Escriba en Ctrl+P: validaciones/mod.rs:144
+   Diga: Esta función revisa la descripción del perfil. Si está vacía o tiene números no deja guardar, y el mensaje dice qué falló.
+
+3. Haga: Pulse Ctrl+P y abra este archivo.
+   Escriba en Ctrl+P: ui/perfil.rs:89
+   Diga: Aquí está la regla que protege el sistema: el perfil Administrador no se inhabilita, y un perfil con usuarios activos tampoco.
+
+4. Haga: Pulse Ctrl+P y abra este archivo.
+   Escriba en Ctrl+P: db/mod.rs:147
+   Diga: Al inhabilitar, esta función solo hace un UPDATE del campo estado, por lo cual ninguna fila se borra.
+
+
+GESTIÓN PERSONA (cerca de 30 segundos)
+
+5. Haga: Pulse Ctrl+P y abra este archivo.
+   Escriba en Ctrl+P: validaciones/mod.rs:8
+   Diga: La identificación solo admite números y debe tener entre 6 y 12 dígitos.
+
+6. Haga: Pulse Ctrl+P y abra este archivo.
+   Escriba en Ctrl+P: validaciones/mod.rs:62
+   Diga: El correo debe tener un formato válido, por ejemplo nombre@dominio.com.
+
+7. Haga: Pulse Ctrl+P y abra este archivo.
+   Escriba en Ctrl+P: ui/persona.rs:169
+   Diga: Esta función valida los datos y revisa que el correo no esté repetido antes de escribir en la base.
+
+
+GESTIÓN USUARIO Y PERMISOS (cerca de 30 segundos)
+
+8. Haga: Pulse Ctrl+P y abra este archivo.
+   Escriba en Ctrl+P: ui/usuario.rs:166
+   Diga: El usuario se crea para una persona ya registrada. El idusuario es la misma identificación de la persona, así queda la relación uno a uno, y idperfil apunta al perfil escogido.
+
+9. Haga: Pulse Ctrl+P y abra este archivo.
+   Escriba en Ctrl+P: ui/mod.rs:161
+   Diga: Esta función revisa el permiso antes de cambiar de pantalla. Perfiles, Usuarios y Base de datos son solo del Administrador, por lo cual no depende solamente de ocultar el botón.
+

@@ -1,0 +1,10 @@
+# Compilación
+target/
+
+# Datos de cada equipo: nunca se suben
+*.db
+*.db-wal
+*.db-shm
+correo.cfg
+*.lnk
+*.exe

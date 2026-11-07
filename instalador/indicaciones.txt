@@ -1,0 +1,57 @@
+﻿INDICACIONES PARA GRABAR SU PARTE
+Farming 6, Equipo 10, Ingeniería de Software III
+
+Gracias por apoyar con esto. Por favor mande el video lo más pronto posible, porque hay que unirlo con el resto de la exposición.
+
+
+QUÉ HAY EN ESTA CARPETA
+
+- Farming6.exe, el programa listo para abrir
+- Indicaciones.txt, este resumen
+- Guion de codigo.txt, lo que se hace y se dice en VS Code
+- Guion visual.txt, lo que se hace y se dice en Farming 6
+- Guia.html, todo lo anterior en una página con lista de avance
+
+
+ANTES DE GRABAR
+
+1. Abra Farming 6 desde la carpeta Farming 6 del Escritorio. La base empieza vacía.
+2. Pulse Registro y cree la primera cuenta, que queda como administrador. Esto no se graba.
+   Identificación 900100. Primer nombre Administrador. Primer apellido Equipo. Deje la fecha vacía y pulse Siguiente.
+3. Complete el segundo paso y pulse Siguiente.
+   Móvil 3000000001. Correo admin@ejemplo.com. Dirección Calle 1.
+4. Complete el tercer paso, Su acceso al sistema.
+   Usuario admin.equipo. La contraseña la escoge usted: de 8 a 64 caracteres, con mayúscula, minúscula y número. Anótela.
+5. Ingrese con ese usuario para comprobar que entra, y luego pulse Salir arriba a la derecha.
+6. Lea los dos guiones una vez y ensaye en voz alta.
+
+
+CÓMO GRABAR CON CLIPCHAMP
+
+1. Abra Clipchamp. Si le pide cuenta, entre con una cuenta personal de Microsoft.
+2. Pulse Crear un video nuevo. A la izquierda busque Grabar y crear, y escoja Pantalla y cámara.
+3. Permita el micrófono y la cámara. Escoja Toda la pantalla para que se vean VS Code y Farming 6.
+4. Pulse grabar. Al terminar, escoja Guardar y editar.
+5. Compruebe que su cámara queda superpuesta encima de la pantalla, en un recuadro, durante toda la grabación.
+6. Exporte el video en 1080p. Clipchamp deja los archivos en la carpeta Descargas.
+
+MUY IMPORTANTE: La cámara debe ir superpuesta sobre la pantalla para que usted se vea todo el tiempo. Quien no aparece con su rostro en el video saca 0,0.
+
+
+PARA QUE QUEDE BIEN
+
+- Siéntese a un brazo de distancia: se le debe ver toda la cabeza, sin que la corte el borde de la cámara.
+- Hable despacio, con voz tranquila y sin leer de corrido.
+- No se toque la cara ni pase las manos frente a la cámara.
+- Si se equivoca, haga una pausa de dos segundos y repita la frase completa. Eso se corrige en la edición.
+- No diga números de línea ni frases como entramos al archivo.
+- Use solo los datos de ejemplo de este guion. No muestre su correo ni datos personales.
+- Grabe en un lugar callado y silencie las notificaciones del PC y del celular.
+
+
+CUANDO TERMINE
+
+1. Grabe primero la parte de código y luego la parte visual. Son dos grabaciones.
+2. Envíe lo más pronto posible el video exportado de cada grabación.
+3. Envíe también los archivos de Descargas que terminan en Screen y en Webcam. Sirven para la edición final.
+4. Si pesan mucho para WhatsApp, súbalos a Google Drive y comparta el enlace con cualquier persona que lo tenga.
