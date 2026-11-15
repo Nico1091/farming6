@@ -2,14 +2,14 @@
 //! temporal y guarda su propio cuadro. Sirve para revisar el diseño; no va en el ejecutable final.
 
 use crate::auth::correo;
-use crate::models::DatosPersona;
+use crate::models::{Cual, DatosPersona};
 use crate::ui::{AppState, Pantalla};
 use eframe::egui;
 use std::fs;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
-const NOMBRES: [&str; 21] = [
+const NOMBRES: [&str; 39] = [
     "00_apertura",
     "01_ingreso_base_vacia",
     "02_registro_paso1",
@@ -26,12 +26,33 @@ const NOMBRES: [&str; 21] = [
     "13_mapa_con_cambio",
     "14_confirmar",
     "15_correo",
-    "16_panel_campesino",
+    "16_panel_sin_productor",
     "17_mis_datos",
     "18_telon",
     "19_personas_antes",
     "20_hoja_entrando",
+    "21_productores",
+    "22_productor_nuevo_error",
+    "23_granjas_filtradas",
+    "24_granja_nueva_cascada",
+    "25_corrales",
+    "26_corral_ficha",
+    "27_razas",
+    "28_raza_ficha_imagen",
+    "29_lotes",
+    "30_lote_nuevo_corrales",
+    "31_lote_ficha",
+    "32_lote_cierre_rechazado",
+    "33_mapa_completo",
+    "34_panel_administrador",
+    "35_productor_mis_granjas",
+    "36_productor_razas",
+    "37_consulta_guiada",
+    "38_consulta_rechazada",
 ];
+
+const PNG: &[u8] = include_bytes!("pruebas/raza_prueba.png");
+const JPG: &[u8] = include_bytes!("pruebas/raza_prueba.jpg");
 
 /// Espera antes de cada foto. Las cortas toman la animación a mitad de camino.
 fn espera(paso: usize) -> u64 {
@@ -126,6 +147,103 @@ fn nuevo_usuario(e: &mut AppState, id: i64, nombre: &str, perfil: i64) {
     e.usuario_guardar();
 }
 
+fn nuevo_productor(e: &mut AppState, d: DatosPersona) {
+    e.ir_a(Pantalla::Productor);
+    e.productor_crear();
+    e.productor.datos = d;
+    e.productor_guardar();
+}
+
+fn llenar(e: &mut AppState, cual: Cual, datos: &[(&str, &str)]) {
+    for (columna, valor) in datos {
+        let i = cual.entidad().indice(columna);
+        e.registro_mut(cual).valores[i] = (*valor).to_string();
+    }
+}
+
+fn nuevo_registro(e: &mut AppState, cual: Cual, datos: &[(&str, &str)]) {
+    e.ir_a(Pantalla::Gestion(cual));
+    e.registro_crear(cual);
+    llenar(e, cual, datos);
+    e.registro_guardar(cual);
+}
+
+fn elegir_municipio(e: &mut AppState, departamento: &str, municipio: &str) {
+    e.registro_mut(Cual::Granja).departamento = departamento.into();
+    e.granja_cambio_departamento(Cual::Granja);
+    let i = Cual::Granja.entidad().indice("idmunicipio");
+    e.registro_mut(Cual::Granja).valores[i] = municipio.into();
+}
+
+fn nueva_granja(e: &mut AppState, datos: &[(&str, &str)], departamento: &str, municipio: &str) {
+    e.ir_a(Pantalla::Gestion(Cual::Granja));
+    e.registro_crear(Cual::Granja);
+    llenar(e, Cual::Granja, datos);
+    elegir_municipio(e, departamento, municipio);
+    e.registro_guardar(Cual::Granja);
+}
+
+fn nuevo_lote(e: &mut AppState, datos: &[(&str, &str)], corrales: &[(i64, &str)]) {
+    e.ir_a(Pantalla::Gestion(Cual::Lote));
+    e.registro_crear(Cual::Lote);
+    llenar(e, Cual::Lote, datos);
+    e.lote_cargar_corrales();
+    for (corral, cupos) in corrales {
+        if let Some(fila) = e.registro_mut(Cual::Lote).corrales.iter_mut().find(|c| c.corral.codigo == *corral) {
+            fila.elegido = true;
+            fila.cupos = (*cupos).to_string();
+        }
+    }
+    e.registro_guardar(Cual::Lote);
+}
+
+fn nueva_raza(e: &mut AppState, codigo: &str, descripcion: &str, imagen: Option<(&str, &[u8])>) {
+    e.ir_a(Pantalla::Gestion(Cual::Raza));
+    e.registro_crear(Cual::Raza);
+    llenar(e, Cual::Raza, &[("codigor", codigo), ("descripcion", descripcion)]);
+    if let Some((nombre, bytes)) = imagen {
+        let ruta = e.carpeta.join(nombre);
+        if fs::write(&ruta, bytes).is_ok() {
+            e.raza_cargar_archivo(&ruta);
+        }
+    }
+    e.registro_guardar(Cual::Raza);
+}
+
+/// Datos de ejemplo del Parcial II: tres productores, tres granjas, cinco corrales, cuatro razas y
+/// tres lotes con sus corrales.
+fn sembrar_porcinos(e: &mut AppState) {
+    nuevo_productor(e, DatosPersona { direccion: "Vereda Agua Linda".into(), ..persona("1090000002", "Pedro", "Contreras", "pedro@ejemplo.com", "3102223344") });
+    nuevo_productor(e, DatosPersona { direccion: "Vereda Puerto León".into(), ..persona("1090000003", "Luz Marina", "Duarte", "luz@ejemplo.com", "3203334455") });
+    nuevo_productor(e, persona("88123456", "Ramiro", "Peñaranda", "", "6075712345"));
+    nueva_granja(e, &[("codigo", "100"), ("idproductor", "1090000002"), ("nombre", "La Esperanza"), ("vereda", "El Pórtico"), ("telefono", "3102223344")], "54", "54001");
+    nueva_granja(e, &[("codigo", "200"), ("idproductor", "1090000002"), ("nombre", "El Recreo"), ("vereda", "La Y")], "54", "54261");
+    nueva_granja(e, &[("codigo", "300"), ("idproductor", "1090000003"), ("nombre", "Villa Luz"), ("vereda", "Puerto León"), ("correo", "villaluz@ejemplo.com")], "54", "54405");
+    for (codigo, granja, nombre, capacidad) in
+        [("11", "100", "Corral 1", "20"), ("12", "100", "Corral 2", "15"), ("13", "100", "Maternidad", "8"), ("21", "200", "Corral 1", "30"), ("31", "300", "Corral A", "25")]
+    {
+        nuevo_registro(e, Cual::Corral, &[("codigo", codigo), ("codigo_granja", granja), ("nombre", nombre), ("capacidad", capacidad)]);
+    }
+    nueva_raza(e, "1", "Landrace", Some(("landrace.png", PNG)));
+    nueva_raza(e, "2", "Duroc", Some(("duroc.jpg", JPG)));
+    nueva_raza(e, "3", "Pietrain", None);
+    nueva_raza(e, "4", "Large White", Some(("large.png", PNG)));
+    let lote = |codigo, granja, inicial, final_, cantidad| {
+        [("codigol", codigo), ("codigo_granja", granja), ("fecha_inicial", inicial), ("fecha_final", final_), ("cantidad", cantidad), ("peso_objetivo", "110")]
+    };
+    nuevo_lote(e, &lote("1001", "100", "2026-09-01", "2027-01-10", "30"), &[(11, "20"), (12, "10")]);
+    nuevo_lote(e, &lote("1002", "200", "2026-10-15", "2027-02-20", "24"), &[(21, "24")]);
+    nuevo_lote(e, &lote("1003", "300", "2026-08-20", "2026-12-28", "28"), &[(31, "25")]);
+    e.mensaje = None;
+}
+
+fn abrir_registro_de(e: &mut AppState, cual: Cual, id: i64) {
+    e.ir_a(Pantalla::Gestion(cual));
+    if let Some(r) = e.registro(cual).lista.iter().find(|r| r.id == id).cloned() {
+        e.registro_mostrar(cual, &r);
+    }
+}
+
 fn preparar(paso: usize, e: &mut AppState) {
     match paso {
         2 => {
@@ -155,9 +273,9 @@ fn preparar(paso: usize, e: &mut AppState) {
             e.acceso.usuario = "admin.farming".into();
             e.acceso.clave = "Potrero2026".into();
             e.ingresar();
-            nueva_persona(e, persona("1090000002", "Pedro", "Contreras", "pedro@ejemplo.com", "3102223344"));
-            nueva_persona(e, persona("1090000003", "Luz Marina", "Duarte", "luz@ejemplo.com", "3203334455"));
-            nuevo_usuario(e, 1_090_000_002, "pedro.contreras", 2);
+            nueva_persona(e, persona("1090000004", "Jorge", "Ibáñez", "jorge@ejemplo.com", "3102223345"));
+            nueva_persona(e, persona("1090000005", "Marta", "Suárez", "marta@ejemplo.com", "3203334456"));
+            nuevo_usuario(e, 1_090_000_004, "jorge.ibanez", 2);
             e.ir_a(Pantalla::Perfil);
             e.perfil_crear();
             e.perfil.descripc = "Técnico agrícola".into();
@@ -167,7 +285,7 @@ fn preparar(paso: usize, e: &mut AppState) {
         }
         7 => e.ir_a(Pantalla::Persona),
         8 => {
-            e.persona.buscar = "1090000003".into();
+            e.persona.buscar = "1090000005".into();
             e.persona_consultar();
             e.mensaje = None;
         }
@@ -180,8 +298,8 @@ fn preparar(paso: usize, e: &mut AppState) {
             e.mensaje = None;
             e.ir_a(Pantalla::Usuario);
             e.usuario_crear();
-            e.usuario.idpersona = Some(1_090_000_003);
-            e.usuario.nombreu = "luz.duarte".into();
+            e.usuario.idpersona = Some(1_090_000_005);
+            e.usuario.nombreu = "marta.suarez".into();
             e.usuario.idperfil = Some(2);
         }
         11 => {
@@ -191,7 +309,7 @@ fn preparar(paso: usize, e: &mut AppState) {
         12 => e.ir_a(Pantalla::Mapa),
         13 => {
             e.ir_a(Pantalla::Persona);
-            e.persona.buscar = "1090000002".into();
+            e.persona.buscar = "1090000004".into();
             e.persona_consultar();
             e.persona_modificar();
             e.persona.datos.direccion = "Vereda La Floresta".into();
@@ -200,7 +318,7 @@ fn preparar(paso: usize, e: &mut AppState) {
         }
         14 => {
             e.ir_a(Pantalla::Persona);
-            e.persona.buscar = "1090000003".into();
+            e.persona.buscar = "1090000005".into();
             e.persona_consultar();
             e.mensaje = None;
             e.persona_pedir_inhabilitar();
@@ -213,7 +331,7 @@ fn preparar(paso: usize, e: &mut AppState) {
         }
         16 => {
             e.cerrar_sesion();
-            e.acceso.usuario = "pedro.contreras".into();
+            e.acceso.usuario = "jorge.ibanez".into();
             e.acceso.clave = "Potrero2026".into();
             e.ingresar();
         }
@@ -228,6 +346,78 @@ fn preparar(paso: usize, e: &mut AppState) {
         20 => {
             let primera = e.persona.lista[0].clone();
             e.persona_mostrar(&primera);
+        }
+        21 => {
+            sembrar_porcinos(e);
+            e.ir_a(Pantalla::Productor);
+        }
+        22 => {
+            e.productor_crear();
+            e.productor.datos = DatosPersona { fecha_nac: "2012-05-01".into(), ..persona("77123456", "Lucía", "Vera", "", "3157778899") };
+            e.productor_guardar();
+        }
+        23 => {
+            e.mensaje = None;
+            e.ir_a(Pantalla::Gestion(Cual::Granja));
+            e.registro_mut(Cual::Granja).filtros[0] = "54".into();
+            e.registro_cambiar_filtro(Cual::Granja, 0);
+        }
+        24 => {
+            e.registro_crear(Cual::Granja);
+            llenar(e, Cual::Granja, &[("codigo", "400"), ("idproductor", "88123456"), ("nombre", "Los Naranjos")]);
+            elegir_municipio(e, "54", "54405");
+        }
+        25 => {
+            e.ir_a(Pantalla::Gestion(Cual::Corral));
+            e.registro_mut(Cual::Corral).filtros[0] = "100".into();
+        }
+        26 => abrir_registro_de(e, Cual::Corral, 11),
+        27 => e.ir_a(Pantalla::Gestion(Cual::Raza)),
+        28 => abrir_registro_de(e, Cual::Raza, 1),
+        29 => e.ir_a(Pantalla::Gestion(Cual::Lote)),
+        30 => {
+            e.registro_crear(Cual::Lote);
+            llenar(e, Cual::Lote, &[("codigol", "1004"), ("codigo_granja", "100"), ("fecha_final", "2027-03-15"), ("cantidad", "18"), ("peso_objetivo", "110")]);
+            e.lote_cargar_corrales();
+            if let Some(fila) = e.registro_mut(Cual::Lote).corrales.iter_mut().find(|c| c.corral.codigo == 13) {
+                fila.elegido = true;
+                fila.cupos = "8".into();
+            }
+        }
+        31 => abrir_registro_de(e, Cual::Lote, 1001),
+        32 => {
+            e.lote_pedir_cierre();
+            e.lote_cerrar();
+        }
+        33 => {
+            e.mensaje = None;
+            e.ir_a(Pantalla::Mapa);
+            e.tabla_del_mapa = 10;
+        }
+        34 => e.ir_a(Pantalla::Panel),
+        35 => {
+            nuevo_usuario(e, 1_090_000_002, "pedro.contreras", 2);
+            e.cerrar_sesion();
+            e.acceso.usuario = "pedro.contreras".into();
+            e.acceso.clave = "Potrero2026".into();
+            e.ingresar();
+            e.telon = None;
+            e.ir_a(Pantalla::Gestion(Cual::Granja));
+        }
+        36 => e.ir_a(Pantalla::Gestion(Cual::Raza)),
+        37 => {
+            e.cerrar_sesion();
+            e.acceso.usuario = "admin.farming".into();
+            e.acceso.clave = "Potrero2026".into();
+            e.ingresar();
+            e.telon = None;
+            e.mensaje = None;
+            e.ir_a(Pantalla::Mapa);
+            e.consulta_guiada(2);
+        }
+        38 => {
+            e.consulta.sql = "DELETE FROM corral WHERE codigo = 11".into();
+            e.consulta_ejecutar();
         }
         _ => {}
     }

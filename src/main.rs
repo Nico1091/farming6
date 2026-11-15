@@ -1,12 +1,14 @@
 #![cfg_attr(not(test), windows_subsystem = "windows")]
 
-//! Farming 6: acceso al sistema, menú y CRUD de Perfil, Usuario y Persona.
-//! Parcial I de Ingeniería de Software III.
+//! Farming 6: acceso al sistema, menú y CRUD de Perfil, Usuario y Persona (Parcial I), y los
+//! requisitos aprobados del Parcial II: productores, granjas porcícolas, corrales, razas y lotes
+//! de cerdos. Ingeniería de Software III, Uniremington.
 
 mod auth;
 #[cfg(feature = "captura")]
 mod captura;
 mod db;
+mod imagen;
 mod models;
 #[cfg(test)]
 mod pruebas;
@@ -19,7 +21,7 @@ use eframe::egui::{self, Margin};
 use std::path::PathBuf;
 use std::time::Duration;
 use ui::theme::{self, NIEBLA};
-use ui::{comun, dashboard, login, mapa, perfil, persona, usuario, AppState, Pantalla};
+use ui::{comun, dashboard, login, mapa, perfil, persona, productor, registro, usuario, AppState, Pantalla};
 
 /// Icono de la ventana: el sol sobre la cordillera, dibujado sin archivos externos.
 fn icono() -> egui::IconData {
@@ -77,6 +79,8 @@ fn interior(contexto: &egui::Context, estado: &mut AppState) {
             Pantalla::Usuario => usuario::pantalla(lienzo, estado),
             Pantalla::Mapa => mapa::pantalla(lienzo, estado),
             Pantalla::Correo => ui::correo::pantalla(lienzo, estado),
+            Pantalla::Productor => productor::pantalla(lienzo, estado),
+            Pantalla::Gestion(cual) => registro::pantalla(lienzo, estado, cual),
             _ => dashboard::pantalla(lienzo, estado),
         }
     });
@@ -88,6 +92,8 @@ fn interior(contexto: &egui::Context, estado: &mut AppState) {
         Pantalla::Perfil => perfil::hoja_lateral(contexto, estado),
         Pantalla::Persona => persona::hoja_lateral(contexto, estado),
         Pantalla::Usuario => usuario::hoja_lateral(contexto, estado),
+        Pantalla::Productor => productor::hoja_lateral(contexto, estado),
+        Pantalla::Gestion(cual) => registro::hoja_lateral(contexto, estado, cual),
         _ => {}
     }
     comun::aviso_flotante(contexto, estado);
@@ -126,6 +132,15 @@ impl eframe::App for Aplicacion {
 
 fn main() -> eframe::Result<()> {
     let carpeta = carpeta_de_datos();
+    // `Farming6.exe --verificar` abre la base, corre las migraciones y sale sin abrir ventana:
+    // comprueba que Windows deja correr el ejecutable y que la base abre. Sale con 0 si todo va bien.
+    if std::env::args().any(|a| a == "--verificar") {
+        let codigo = match Database::abrir(&carpeta.join("farming6.db")) {
+            Ok(_) => 0,
+            Err(_) => 3,
+        };
+        std::process::exit(codigo);
+    }
     let base = match Database::abrir(&carpeta.join("farming6.db")) {
         Ok(base) => base,
         Err(error) => panic!("No se pudo abrir la base de datos: {error}"),
@@ -136,7 +151,8 @@ fn main() -> eframe::Result<()> {
         .with_title("Farming 6")
         .with_icon(icono())
         .with_inner_size([1366.0, 800.0])
-        .with_min_inner_size([1120.0, 680.0]);
+        .with_min_inner_size([1280.0, 680.0])
+        .with_drag_and_drop(true);
     #[cfg(not(feature = "captura"))]
     let vista = vista.with_maximized(true);
     #[cfg(feature = "captura")]

@@ -34,4 +34,4 @@ CREATE TABLE IF NOT EXISTS usuario (
 
 INSERT OR IGNORE INTO perfil (idperfil, descripc) VALUES
     (1, 'Administrador'),
-    (2, 'Campesino');
+    (2, 'Productor');

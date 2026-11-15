@@ -1,4 +1,9 @@
-//! Estructuras del modelo relacional del parcial: Perfil, Persona y usuario.
+//! Estructuras del modelo relacional: Perfil, Persona y Usuario (Parcial I) y los formularios
+//! del Parcial II: productores, granjas, corrales, razas y lotes de cerdos.
+
+pub mod registros;
+
+pub use registros::*;
 
 pub const ACTIVO: &str = "A";
 pub const INACTIVO: &str = "I";
@@ -60,6 +65,15 @@ pub struct Usuario {
     pub contrasena: String,
     pub idperfil: i64,
     pub estado: String,
+}
+
+/// Fila de Gestión de Productores (HU-01): la persona, desde cuándo es productor y cuántas
+/// granjas activas tiene.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProductorVista {
+    pub persona: Persona,
+    pub fecha_registro: String,
+    pub granjas: i64,
 }
 
 /// Fila del formulario Gestión Usuario, con los nombres de sus tablas relacionadas.

@@ -1,7 +1,9 @@
-//! Capa de datos: conexión a SQLite y CRUD de las tres tablas del modelo.
+//! Capa de datos: conexión a SQLite, migraciones y CRUD de perfil, persona, usuario y productor.
 //! Todas las consultas van parametrizadas y ninguna función borra filas: inhabilitar
 //! solo cambia el campo estado.
 
+pub mod consulta;
+pub mod registros;
 pub mod vigia;
 
 use crate::models::*;
@@ -12,14 +14,17 @@ use std::time::Duration;
 pub type Resultado<T = ()> = Result<T, String>;
 
 const ESQUEMA: &str = include_str!("../../migrations/001_init.sql");
+const CORREO_OPCIONAL: &str = include_str!("../../migrations/001b_correo_opcional.sql");
+const ESQUEMA_PORCINOS: &str = include_str!("../../migrations/002_porcinos.sql");
+const DIVIPOLA: &str = include_str!("../../migrations/003_divipola.sql");
 
 pub struct Database {
-    conexion: Connection,
+    pub(crate) conexion: Connection,
     pub ruta: PathBuf,
 }
 
 /// Traduce los errores del motor a un mensaje para el usuario.
-fn amable(error: rusqlite::Error) -> String {
+pub(crate) fn amable(error: rusqlite::Error) -> String {
     if let rusqlite::Error::SqliteFailure(fallo, detalle) = &error {
         let texto = detalle.as_deref().unwrap_or("");
         if fallo.code == ErrorCode::ConstraintViolation {
@@ -29,12 +34,45 @@ fn amable(error: rusqlite::Error) -> String {
                 t if t.contains("usuario.nombreu") => "Ese nombre de usuario ya existe.".into(),
                 t if t.contains("usuario.idusuario") => "Esa persona ya tiene un usuario.".into(),
                 t if t.contains("perfil.descripc") => "Ya existe un perfil con esa descripción.".into(),
+                t if t.contains("productor.idproductor") => "Ya existe un productor con ese documento.".into(),
+                t if t.contains("granja.codigo") => "Ya existe una granja con ese código.".into(),
+                t if t.contains("corral.codigo_granja, corral.nombre") => "Esa granja ya tiene un corral con ese nombre.".into(),
+                t if t.contains("corral.codigo") => "Ya existe un corral con ese código.".into(),
+                t if t.contains("raza.codigor") => "Ya existe una raza con ese código.".into(),
+                t if t.contains("raza.descripcion") => "Ya existe una raza con esa descripción.".into(),
+                t if t.contains("lote_corral.codigol") => "Ese corral ya está asignado al lote.".into(),
+                t if t.contains("lote.codigol") => "Ya existe un lote con ese código.".into(),
+                t if t.contains("CHECK") => "La base de datos rechazó un valor fuera de rango.".into(),
                 t if t.contains("FOREIGN KEY") => "El registro relacionado no existe.".into(),
+                // Mensajes de los disparadores de migrations/002_porcinos.sql: ya están escritos para el usuario.
+                t if !t.contains("constraint") && t.ends_with('.') => t.to_string(),
                 _ => format!("La base de datos rechazó el registro: {texto}"),
             };
         }
     }
     format!("Error de base de datos: {error}")
+}
+
+/// HU-01 deja el correo del productor como opcional: reconstruye persona si todavía lo exige.
+fn correo_opcional(conexion: &Connection) -> Resultado {
+    let exige: i64 = conexion
+        .query_row("SELECT \"notnull\" FROM pragma_table_info('persona') WHERE name = 'correo'", [], |f| f.get(0))
+        .map_err(amable)?;
+    if exige == 0 {
+        return Ok(());
+    }
+    conexion.execute_batch("PRAGMA foreign_keys = OFF;").map_err(amable)?;
+    let resultado = conexion.execute_batch(CORREO_OPCIONAL);
+    if resultado.is_err() {
+        let _ = conexion.execute_batch("ROLLBACK;");
+    }
+    conexion.execute_batch("PRAGMA foreign_keys = ON;").map_err(amable)?;
+    resultado.map_err(amable)?;
+    let huerfanas: i64 = conexion.query_row("SELECT COUNT(*) FROM pragma_foreign_key_check", [], |f| f.get(0)).map_err(amable)?;
+    if huerfanas > 0 {
+        return Err(format!("La migración del correo dejó {huerfanas} registro(s) sin su persona."));
+    }
+    Ok(())
 }
 
 fn perfil_de(f: &Row) -> rusqlite::Result<Perfil> {
@@ -54,7 +92,7 @@ fn persona_de(f: &Row) -> rusqlite::Result<Persona> {
         direccion: opcional(5)?,
         tele: opcional(6)?,
         movil: f.get(7)?,
-        correo: f.get(8)?,
+        correo: opcional(8)?,
         fecha_nac: opcional(9)?,
         estado: f.get(10)?,
     })
@@ -91,6 +129,12 @@ impl Database {
             .map_err(amable)?;
         conexion.execute_batch("PRAGMA foreign_keys = ON;").map_err(amable)?;
         conexion.execute_batch(ESQUEMA).map_err(amable)?;
+        correo_opcional(&conexion)?;
+        conexion.execute_batch(ESQUEMA_PORCINOS).map_err(amable)?;
+        let municipios: i64 = conexion.query_row("SELECT COUNT(*) FROM municipio", [], |f| f.get(0)).map_err(amable)?;
+        if municipios == 0 {
+            conexion.execute_batch(DIVIPOLA).map_err(amable)?;
+        }
         Ok(Self { conexion, ruta: ruta.to_path_buf() })
     }
 
@@ -187,7 +231,7 @@ impl Database {
                     vacio_a_nulo(&p.direccion),
                     vacio_a_nulo(&p.tele),
                     p.movil,
-                    p.correo,
+                    vacio_a_nulo(&p.correo),
                     vacio_a_nulo(&p.fecha_nac),
                     p.estado
                 ],
@@ -210,7 +254,7 @@ impl Database {
                     vacio_a_nulo(&p.direccion),
                     vacio_a_nulo(&p.tele),
                     p.movil,
-                    p.correo,
+                    vacio_a_nulo(&p.correo),
                     vacio_a_nulo(&p.fecha_nac),
                     p.estado
                 ],
@@ -333,6 +377,56 @@ impl Database {
         )
     }
 
+    // Productor (HU-01)
+
+    pub fn es_productor(&self, id: i64) -> Resultado<bool> {
+        self.contar("SELECT COUNT(*) FROM productor WHERE idproductor = ?1", [id]).map(|n| n > 0)
+    }
+
+    /// Productores con su persona y el número de granjas activas, por apellido. `id` limita la
+    /// consulta a uno solo.
+    fn consultar_productores(&self, id: Option<i64>) -> Resultado<Vec<ProductorVista>> {
+        let sql = format!(
+            "SELECT {}, pr.fecha_registro,
+                    (SELECT COUNT(*) FROM granja g WHERE g.idproductor = pr.idproductor AND g.estado = 'A')
+             FROM productor pr JOIN persona p ON p.idpersona = pr.idproductor
+             WHERE ?1 IS NULL OR pr.idproductor = ?1
+             ORDER BY p.apell1, p.nom1",
+            CAMPOS_PERSONA.split(", ").map(|c| format!("p.{c}")).collect::<Vec<_>>().join(", ")
+        );
+        let mut consulta = self.conexion.prepare(&sql).map_err(amable)?;
+        let filas = consulta
+            .query_map([id], |f| Ok(ProductorVista { persona: persona_de(f)?, fecha_registro: f.get(11)?, granjas: f.get(12)? }))
+            .map_err(amable)?;
+        filas.collect::<Result<_, _>>().map_err(amable)
+    }
+
+    pub fn listar_productores(&self) -> Resultado<Vec<ProductorVista>> {
+        self.consultar_productores(None)
+    }
+
+    pub fn productor_por_id(&self, id: i64) -> Resultado<Option<ProductorVista>> {
+        Ok(self.consultar_productores(Some(id))?.into_iter().next())
+    }
+
+    /// Registra un productor. Si la persona no existe se crea; si ya existe (por ejemplo, alguien
+    /// que se registró en el ingreso), se actualizan sus datos con los del formulario. Las dos
+    /// escrituras van en una transacción. Devuelve verdadero si la persona ya existía.
+    pub fn crear_productor(&self, p: &Persona, fecha_registro: &str) -> Resultado<bool> {
+        let transaccion = self.conexion.unchecked_transaction().map_err(amable)?;
+        let existia = self.persona_por_id(p.idpersona)?.is_some();
+        if existia {
+            self.modificar_persona(p)?;
+        } else {
+            self.crear_persona(p)?;
+        }
+        transaccion
+            .execute("INSERT INTO productor (idproductor, fecha_registro) VALUES (?1, ?2)", params![p.idpersona, fecha_registro])
+            .map_err(amable)?;
+        transaccion.commit().map_err(amable)?;
+        Ok(existia)
+    }
+
     /// Crea persona y usuario juntos: si uno falla, no queda ninguno.
     pub fn crear_persona_con_usuario(&mut self, p: &Persona, u: &Usuario) -> Resultado {
         let transaccion = self.conexion.transaction().map_err(amable)?;
@@ -348,7 +442,7 @@ impl Database {
                     vacio_a_nulo(&p.direccion),
                     vacio_a_nulo(&p.tele),
                     p.movil,
-                    p.correo,
+                    vacio_a_nulo(&p.correo),
                     vacio_a_nulo(&p.fecha_nac),
                     p.estado
                 ],

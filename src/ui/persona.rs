@@ -1,7 +1,9 @@
 //! Gestión Persona. El Administrador tiene todas las acciones; el perfil Persona no puede
-//! inhabilitar y solo consulta o modifica sus propios datos.
+//! inhabilitar y solo consulta o modifica sus propios datos. Si la persona es productor, el
+//! formulario toma las reglas de HU-01 (ui/productor.rs).
 
 use super::comun::*;
+use super::productor::{campos_productor, datos_productor};
 use super::theme::*;
 use super::{AccionPendiente, AppState, Confirmacion, Modo, Pantalla};
 use crate::models::{estado_de, estado_texto, DatosPersona, Persona, ACTIVO, INACTIVO};
@@ -17,6 +19,8 @@ pub struct FormPersona {
     pub hoja: bool,
     pub buscar: String,
     pub lista: Vec<Persona>,
+    /// La persona en la hoja es productor: se aplican las reglas de HU-01.
+    pub es_productor: bool,
 }
 
 impl AppState {
@@ -51,6 +55,7 @@ impl AppState {
         self.persona.activo = p.estado == ACTIVO;
         self.persona.modo = Modo::Consulta;
         self.persona.hoja = true;
+        self.persona.es_productor = self.db.es_productor(p.idpersona).unwrap_or(false);
     }
 
     /// Salir de la hoja: descarta lo escrito. Sin edición en curso cierra la hoja,
@@ -72,6 +77,7 @@ impl AppState {
         self.persona.activo = true;
         self.persona.modo = Modo::Nuevo;
         self.persona.hoja = true;
+        self.persona.es_productor = false;
     }
 
     /// Botón Registrarse de la pantalla de acceso: carga el formulario Persona.
@@ -168,9 +174,13 @@ impl AppState {
     /// Valida y escribe en la base. Sirve para Gestión Persona y para Registrarse.
     fn persona_escribir(&mut self) -> Result<Persona, String> {
         let hoy = reloj::ahora().fecha;
-        let id = validaciones::persona(&self.persona.datos, hoy)?;
+        let id = if self.persona.es_productor {
+            validaciones::productor(&self.persona.datos, hoy)?
+        } else {
+            validaciones::persona(&self.persona.datos, hoy)?
+        };
         let correo = self.persona.datos.correo.trim().to_lowercase();
-        let correo_ajeno = self.db.persona_por_correo(&correo)?.is_some_and(|p| Some(p.idpersona) != self.persona.id);
+        let correo_ajeno = !correo.is_empty() && self.db.persona_por_correo(&correo)?.is_some_and(|p| Some(p.idpersona) != self.persona.id);
         if correo_ajeno {
             return Err("Ese correo ya está registrado.".into());
         }
@@ -277,14 +287,26 @@ fn ficha(ui: &mut egui::Ui, estado: &mut AppState) {
         format!("{} {}", form.datos.nom1, form.datos.apell1).trim().to_string()
     };
     titulo_de_hoja(ui, &titulo);
+    if form.es_productor {
+        ui.label(egui::RichText::new("Esta persona es productor: su correo es opcional.").size(13.0).color(SALVIA));
+        ui.add_space(8.0);
+    }
     if modo == Modo::Consulta {
-        datos_en_lectura(ui, &form.datos);
+        if form.es_productor {
+            datos_productor(ui, &form.datos);
+        } else {
+            datos_en_lectura(ui, &form.datos);
+        }
         if administrador {
             dato(ui, "Estado", if form.activo { "Activo" } else { "Inhabilitado" });
         }
     } else {
-        campos_identidad(ui, SOBRE_NIEBLA, &mut form.datos, modo == Modo::Nuevo);
-        campos_contacto(ui, SOBRE_NIEBLA, &mut form.datos);
+        if form.es_productor {
+            campos_productor(ui, SOBRE_NIEBLA, &mut form.datos, modo == Modo::Nuevo);
+        } else {
+            campos_identidad(ui, SOBRE_NIEBLA, &mut form.datos, modo == Modo::Nuevo);
+            campos_contacto(ui, SOBRE_NIEBLA, &mut form.datos);
+        }
         if administrador {
             interruptor(ui, SOBRE_NIEBLA, &mut form.activo, true);
         }

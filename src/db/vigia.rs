@@ -33,6 +33,8 @@ pub struct TablaViva {
     pub nombre: String,
     pub columnas: Vec<Columna>,
     pub filas: Vec<Vec<String>>,
+    /// Llave de cada fila; si la llave primaria es compuesta, sus partes unidas por « · ».
+    pub claves: Vec<String>,
     pub activos: usize,
     pub inhabilitados: usize,
 }
@@ -142,8 +144,26 @@ fn texto_de(valor: ValueRef) -> String {
         ValueRef::Integer(n) => n.to_string(),
         ValueRef::Real(n) => n.to_string(),
         ValueRef::Text(t) => String::from_utf8_lossy(t).into_owned(),
-        ValueRef::Blob(b) => format!("<{} bytes>", b.len()),
+        ValueRef::Blob(b) => describir_bytes(b),
     }
+}
+
+/// Formato, peso y huella de un BLOB: «PNG · 84 KB · #3fa2c1». La huella (FNV-1a) hace que el
+/// vigía note el cambio de una imagen por otra del mismo peso.
+pub(crate) fn describir_bytes(b: &[u8]) -> String {
+    let formato = if b.starts_with(&[0x89, b'P', b'N', b'G']) {
+        "PNG"
+    } else if b.starts_with(&[0xFF, 0xD8, 0xFF]) {
+        "JPG"
+    } else {
+        "BLOB"
+    };
+    let mut huella: u64 = 0xcbf2_9ce4_8422_2325;
+    for &byte in b {
+        huella ^= u64::from(byte);
+        huella = huella.wrapping_mul(0x0100_0000_01b3);
+    }
+    format!("{formato} · {} KB · #{:06x}", b.len().div_ceil(1024), huella & 0xFF_FFFF)
 }
 
 fn mostrar(columna: &str, valor: &str) -> String {
@@ -155,13 +175,11 @@ fn mostrar(columna: &str, valor: &str) -> String {
     }
 }
 
+/// Orden de las pestañas: primero el Parcial I y después cada tabla tras las que referencia.
 fn orden_de_tabla(nombre: &str) -> usize {
-    match nombre {
-        "perfil" => 0,
-        "usuario" => 1,
-        "persona" => 2,
-        _ => 3,
-    }
+    const ORDEN: [&str; 11] =
+        ["perfil", "usuario", "persona", "productor", "departamento", "municipio", "granja", "corral", "raza", "lote", "lote_corral"];
+    ORDEN.iter().position(|n| *n == nombre).unwrap_or(ORDEN.len())
 }
 
 fn leer(conexion: &Connection) -> rusqlite::Result<Lectura> {
@@ -193,8 +211,11 @@ fn leer(conexion: &Connection) -> rusqlite::Result<Lectura> {
             })?
             .collect::<Result<_, _>>()?;
 
+        // 1:1 solo si la llave foránea es toda la llave primaria. En lote_corral la llave es
+        // compuesta: cada parte apunta a su tabla con una relación de uno a muchos.
+        let partes_de_llave = columnas.iter().filter(|c| c.llave_primaria).count();
         for (columna, destino, columna_destino) in foraneas {
-            let uno_a_uno = columnas.iter().any(|c| c.nombre == columna && c.llave_primaria);
+            let uno_a_uno = partes_de_llave == 1 && columnas.iter().any(|c| c.nombre == columna && c.llave_primaria);
             lectura.relaciones.push(Relacion {
                 tabla: nombre.clone(),
                 columna,
@@ -205,9 +226,13 @@ fn leer(conexion: &Connection) -> rusqlite::Result<Lectura> {
         }
 
         let titulos: Vec<String> = columnas.iter().map(|c| c.nombre.clone()).collect();
-        let llave = columnas.iter().position(|c| c.llave_primaria).unwrap_or(0);
+        let mut llave: Vec<usize> = (0..columnas.len()).filter(|&i| columnas[i].llave_primaria).collect();
+        if llave.is_empty() {
+            llave.push(0);
+        }
         let posicion_estado = titulos.iter().position(|t| t == "estado");
         let mut filas = Vec::new();
+        let mut claves = Vec::new();
         let mut crudo = BTreeMap::new();
         let (mut activos, mut inhabilitados) = (0, 0);
 
@@ -223,11 +248,13 @@ fn leer(conexion: &Connection) -> rusqlite::Result<Lectura> {
                 _ => activos += 1,
             }
             filas.push(titulos.iter().zip(&valores).map(|(t, v)| mostrar(t, v)).collect());
-            crudo.insert(valores[llave].clone(), valores);
+            let clave = llave.iter().map(|&i| valores[i].as_str()).collect::<Vec<_>>().join(" · ");
+            claves.push(clave.clone());
+            crudo.insert(clave, valores);
         }
 
         lectura.crudo.insert(nombre.clone(), crudo);
-        lectura.tablas.push(TablaViva { nombre, columnas, filas, activos, inhabilitados });
+        lectura.tablas.push(TablaViva { nombre, columnas, filas, claves, activos, inhabilitados });
     }
     Ok(lectura)
 }

@@ -73,7 +73,8 @@ impl AppState {
         }
 
         let administrador = perfil.descripc.eq_ignore_ascii_case("Administrador");
-        self.sesion = Some(Sesion { usuario, persona, perfil: perfil.descripc, administrador });
+        let productor = self.db.es_productor(usuario.idusuario).unwrap_or(false);
+        self.sesion = Some(Sesion { usuario, persona, perfil: perfil.descripc, administrador, productor });
         self.acceso = Default::default();
         self.mensaje = None;
         self.pantalla = Pantalla::Panel;
@@ -125,6 +126,9 @@ impl AppState {
         };
         if usuario.estado != ACTIVO || persona.estado != ACTIVO {
             return self.error("Su usuario está inhabilitado. Comuníquese con el administrador.");
+        }
+        if persona.correo.is_empty() {
+            return self.error("Su cuenta no tiene correo registrado. Comuníquese con el administrador.");
         }
         let Some(cuenta) = correo::cargar(&self.carpeta) else {
             return self.error("El correo del sistema no está configurado. Debe hacerlo el administrador.");

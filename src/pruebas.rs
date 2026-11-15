@@ -14,6 +14,8 @@ use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
+mod porcinos;
+
 static CONTADOR: AtomicU32 = AtomicU32::new(0);
 
 struct Limpieza(PathBuf);
@@ -44,9 +46,9 @@ fn datos(id: &str, nombre: &str, correo: &str) -> DatosPersona {
         identificacion: id.into(),
         nom1: nombre.into(),
         nom2: String::new(),
-        apell1: "Prueba".into(),
+        apell1: "Rojas".into(),
         apell2: String::new(),
-        direccion: "Bogotá".into(),
+        direccion: "Cúcuta".into(),
         tele: String::new(),
         movil: "3001234567".into(),
         correo: correo.into(),
@@ -55,10 +57,10 @@ fn datos(id: &str, nombre: &str, correo: &str) -> DatosPersona {
 }
 
 const CLAVE_ADMIN: &str = "Campo2026";
-const ID_ADMIN: i64 = 900_100_200;
+const ID_ADMIN: i64 = 1_091_352_918;
 
 fn crear_admin(e: &mut AppState) {
-    e.inicial.datos = datos("900100200", "Ana", "admin@ejemplo.com");
+    e.inicial.datos = datos("1091352918", "Nicolás", "admin@ejemplo.com");
     e.inicial.nombreu = "admin.farming".into();
     e.inicial.clave = CLAVE_ADMIN.into();
     e.crear_administrador_inicial();
@@ -132,7 +134,7 @@ fn el_registro_por_pasos_valida_cada_paso_y_crea_el_primer_administrador() {
     assert_eq!(e.inicial.paso, 0, "sin datos no avanza");
     assert_eq!(tipo(e), Some(TipoMensaje::Error));
 
-    e.persona.datos = datos("900100200", "Ana", "admin@ejemplo.com");
+    e.persona.datos = datos("1091352918", "Nicolás", "admin@ejemplo.com");
     e.registro_siguiente();
     assert_eq!(e.inicial.paso, 1, "{}", texto(e));
     e.persona.datos.correo = "malo".into();
@@ -145,7 +147,7 @@ fn el_registro_por_pasos_valida_cada_paso_y_crea_el_primer_administrador() {
 
     e.registro_atras();
     assert_eq!(e.inicial.paso, 1);
-    assert_eq!(e.persona.datos.nom1, "Ana", "volver no borra lo escrito");
+    assert_eq!(e.persona.datos.nom1, "Nicolás", "volver no borra lo escrito");
     e.registro_siguiente();
 
     e.inicial.nombreu = "admin.farming".into();
@@ -164,7 +166,7 @@ fn con_cuentas_el_registro_tiene_dos_pasos_y_no_crea_administradores() {
     crear_admin(&mut t.e);
     let e = &mut t.e;
     e.abrir_registro();
-    e.persona.datos = datos("900100200", "Otra", "otra@ejemplo.com");
+    e.persona.datos = datos("1091352918", "Otra", "otra@ejemplo.com");
     e.registro_siguiente();
     assert_eq!(e.inicial.paso, 0, "la identificación repetida se avisa en el primer paso");
     assert!(texto(e).contains("ya está registrada"));
@@ -385,10 +387,10 @@ fn crud_de_usuario_y_relacion_uno_a_uno() {
     e.usuario.buscar = "pedro".into();
     e.usuario_consultar();
     e.usuario_modificar();
-    e.usuario.nombreu = "pedro.prueba".into();
+    e.usuario.nombreu = "pedro.rojas".into();
     e.usuario_guardar();
     let u = e.db.usuario_por_id(70_111_222).unwrap().unwrap();
-    assert_eq!(u.nombreu, "pedro.prueba");
+    assert_eq!(u.nombreu, "pedro.rojas");
     assert!(auth::verificar("Campo2026", &u.contrasena), "vacía conserva la contraseña");
 
     e.usuario_modificar();
@@ -403,7 +405,7 @@ fn crud_de_usuario_y_relacion_uno_a_uno() {
     assert_eq!(e.db.usuario_por_id(70_111_222).unwrap().unwrap().estado, INACTIVO);
 
     e.cerrar_sesion();
-    ingresar(e, "pedro.prueba", "Potrero2026");
+    ingresar(e, "pedro.rojas", "Potrero2026");
     assert!(texto(e).contains("inhabilitado"), "{}", texto(e));
 }
 
@@ -469,9 +471,9 @@ fn permisos_del_perfil_persona() {
     assert_eq!(e.persona.lista.len(), 1, "solo ve sus datos");
     assert_eq!(e.persona.id, Some(70_111_222));
     e.persona_modificar();
-    e.persona.datos.direccion = "Medellín".into();
+    e.persona.datos.direccion = "Los Patios".into();
     e.persona_guardar();
-    assert_eq!(e.db.persona_por_id(70_111_222).unwrap().unwrap().direccion, "Medellín");
+    assert_eq!(e.db.persona_por_id(70_111_222).unwrap().unwrap().direccion, "Los Patios");
 
     e.persona.buscar = "70111333".into();
     e.persona_consultar();
@@ -647,7 +649,7 @@ fn recuperar_envia_correo_real_y_solo_entonces_cambia_la_clave() {
 
     let (puerto, hilo) = servidor_falso(false);
     e.servidor_correo = format!("smtp://127.0.0.1:{puerto}");
-    e.acceso.dato = "900100200".into();
+    e.acceso.dato = "1091352918".into();
     e.recuperar();
     assert!(e.acceso.envio.is_some());
     esperar_envio(e);
@@ -680,7 +682,8 @@ fn el_vigia_lee_el_esquema_real_y_detecta_cada_cambio() {
     let foto = mirar();
 
     let nombres: Vec<&str> = foto.tablas.iter().map(|x| x.nombre.as_str()).collect();
-    assert_eq!(nombres, ["perfil", "usuario", "persona"]);
+    assert_eq!(&nombres[..3], ["perfil", "usuario", "persona"]);
+    assert_eq!(nombres.len(), 11, "las tres del Parcial I y las ocho del Parcial II");
     let columnas = |tabla: &str| -> Vec<String> {
         foto.tabla(tabla).unwrap().columnas.iter().map(|c| c.nombre.clone()).collect()
     };
@@ -711,12 +714,12 @@ fn el_vigia_lee_el_esquema_real_y_detecta_cada_cambio() {
     assert!(foto.resaltado_tabla("persona") > 0.0);
 
     e.persona_modificar();
-    e.persona.datos.direccion = "Medellín".into();
+    e.persona.datos.direccion = "Los Patios".into();
     e.persona_guardar();
     let foto = mirar();
     let c = foto.cambios.front().expect("detecta el UPDATE");
     assert_eq!(c.accion, Accion::Actualizar);
-    assert!(c.detalle.contains("Bogotá → Medellín"), "{}", c.detalle);
+    assert!(c.detalle.contains("Cúcuta → Los Patios"), "{}", c.detalle);
     assert_eq!(c.columnas, ["direccion"]);
 
     e.persona_inhabilitar(70_111_222);
@@ -727,7 +730,7 @@ fn el_vigia_lee_el_esquema_real_y_detecta_cada_cambio() {
     assert_eq!((tabla.activos, tabla.inhabilitados, tabla.filas.len()), (1, 1, 2));
 
     let afuera = rusqlite::Connection::open(&ruta).unwrap();
-    afuera.execute("UPDATE perfil SET descripc = 'Productor' WHERE idperfil = 2", []).unwrap();
+    afuera.execute("UPDATE perfil SET descripc = 'Porcicultor' WHERE idperfil = 2", []).unwrap();
     let foto = mirar();
     let c = foto.cambios.front().expect("detecta cambios de otro programa");
     assert_eq!((c.tabla.as_str(), c.clave.as_str()), ("perfil", "2"));
@@ -746,7 +749,7 @@ mod interfaz {
     use std::time::Duration;
 
     const NORMAL: Vec2 = vec2(1366.0, 800.0);
-    const MINIMA: Vec2 = vec2(1120.0, 680.0);
+    const MINIMA: Vec2 = vec2(1280.0, 680.0);
 
     struct Lienzo {
         contexto: Context,
@@ -873,7 +876,10 @@ mod interfaz {
         let mut l = Lienzo::nuevo(MINIMA);
         t.e.telon = None;
         let pantalla = Rect::from_min_size(Pos2::ZERO, MINIMA);
-        for destino in [Pantalla::Panel, Pantalla::Persona, Pantalla::Usuario, Pantalla::Perfil, Pantalla::Mapa, Pantalla::Correo] {
+        let mut destinos =
+            vec![Pantalla::Panel, Pantalla::Persona, Pantalla::Usuario, Pantalla::Perfil, Pantalla::Productor, Pantalla::Mapa, Pantalla::Correo];
+        destinos.extend(Cual::TODAS.map(Pantalla::Gestion));
+        for destino in destinos {
             t.e.ir_a(destino);
             l.asentar(&mut t.e);
             let usado = l.contexto.used_rect();
@@ -888,5 +894,24 @@ mod interfaz {
             let usado = l.contexto.used_rect();
             assert!(pantalla.expand(1.0).contains_rect(usado), "registro {registro}: {usado:?}");
         }
+    }
+
+    /// Las diez opciones del Administrador caben en la barra sin tocar el usuario, «Correo» ni
+    /// «Salir», aun en la ventana más angosta.
+    #[test]
+    fn el_menu_completo_cabe_en_la_ventana_minima() {
+        let t = con_admin();
+        let l = Lienzo::nuevo(MINIMA);
+        let opciones = crate::ui::opciones_del_menu(&t.e);
+        let mut disposicion = None;
+        let entrada = RawInput { screen_rect: Some(Rect::from_min_size(Pos2::ZERO, MINIMA)), ..Default::default() };
+        let _ = l.contexto.run(entrada, |c| {
+            egui::CentralPanel::default().show(c, |ui| {
+                disposicion = Some(crate::ui::disponer_menu(ui, &opciones, "admin.farming", true, MINIMA.x - 112.0));
+            });
+        });
+        let d = disposicion.expect("se calculó la barra");
+        assert!(d.fin + 8.0 <= d.limite, "el menú se encima con lo de la derecha: {d:?}");
+        assert!(d.letra >= 14.0 && d.hueco >= 10.0, "{d:?}");
     }
 }

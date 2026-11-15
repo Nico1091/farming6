@@ -96,6 +96,25 @@ pub fn campo_clave(ui: &mut Ui, p: Paleta, etiqueta: &str, valor: &mut String, v
     respuesta
 }
 
+/// Campo corto de una línea, sin etiqueta flotante, alineado a la derecha: los cerdos que van en
+/// cada corral del lote.
+pub fn campo_corto(ui: &mut Ui, valor: &mut String, ancho: f32, id: &str) -> Response {
+    let (rect, _) = ui.allocate_exact_size(vec2(ancho, 28.0), Sense::hover());
+    let editor = TextEdit::singleline(valor)
+        .id(Id::new(id))
+        .frame(false)
+        .font(FontId::proportional(15.0))
+        .text_color(PINO)
+        .margin(Margin::ZERO)
+        .desired_width(rect.width())
+        .horizontal_align(Align::RIGHT);
+    let respuesta = ui.put(rect.shrink2(vec2(0.0, 4.0)), editor);
+    let color = if respuesta.has_focus() { PINO } else { LINEA };
+    let y = rect.bottom() - 2.0;
+    ui.painter().line_segment([pos2(rect.left(), y), pos2(rect.right(), y)], Stroke::new(1.2_f32, color));
+    respuesta
+}
+
 /// El único botón sólido de cada vista.
 pub fn boton(ui: &mut Ui, p: Paleta, texto: &str, activo: bool) -> bool {
     let sentido = if activo { Sense::click() } else { Sense::hover() };
@@ -138,25 +157,128 @@ pub fn enlace(ui: &mut Ui, color: Color32, texto: &str, activo: bool, tamano: f3
 
 /// Interruptor del campo estado.
 pub fn interruptor(ui: &mut Ui, p: Paleta, activo: &mut bool, habilitado: bool) {
+    interruptor_con(ui, p, activo, habilitado, "Activo");
+}
+
+/// Interruptor del estado con el nombre propio del estado activo, como «En ceba» en el lote.
+pub fn interruptor_con(ui: &mut Ui, p: Paleta, activo: &mut bool, habilitado: bool, nombre_activo: &str) {
     ui.add_space(8.0);
     ui.horizontal(|ui| {
-        let sentido = if habilitado { Sense::click() } else { Sense::hover() };
-        let (rect, respuesta) = ui.allocate_exact_size(vec2(38.0, 20.0), sentido);
-        if respuesta.clicked() {
-            *activo = !*activo;
+        let (texto, color) = if *activo { (nombre_activo, p.texto) } else { ("Inhabilitado", p.error) };
+        let cambio = riel(ui, p, activo, habilitado, ARCILLA);
+        if cambio {
+            ui.ctx().request_repaint();
         }
-        let avance = ui.ctx().animate_bool_with_time(respuesta.id, *activo, duracion(0.14));
-        let riel = mezclar(ARCILLA, p.foco, avance);
-        ui.painter().rect_filled(rect, 10.0, if habilitado { riel } else { riel.gamma_multiply(0.45) });
-        let x = lerp((rect.left() + 10.0)..=(rect.right() - 10.0), avance);
-        ui.painter().circle_filled(pos2(x, rect.center().y), 7.0, Color32::WHITE);
-        if habilitado {
-            respuesta.on_hover_cursor(CursorIcon::PointingHand);
-        }
-        let (texto, color) = if *activo { ("Activo", p.texto) } else { ("Inhabilitado", p.error) };
         ui.label(RichText::new(texto).color(color));
     });
     ui.add_space(6.0);
+}
+
+/// Riel deslizante de encendido y apagado. Devuelve verdadero si cambió.
+pub fn riel(ui: &mut Ui, p: Paleta, encendido: &mut bool, habilitado: bool, apagado: Color32) -> bool {
+    let sentido = if habilitado { Sense::click() } else { Sense::hover() };
+    let (rect, respuesta) = ui.allocate_exact_size(vec2(38.0, 20.0), sentido);
+    let pulsado = respuesta.clicked();
+    if pulsado {
+        *encendido = !*encendido;
+    }
+    let avance = ui.ctx().animate_bool_with_time(respuesta.id, *encendido, duracion(0.14));
+    let color = mezclar(apagado, p.foco, avance);
+    ui.painter().rect_filled(rect, 10.0, if habilitado { color } else { color.gamma_multiply(0.45) });
+    let x = lerp((rect.left() + 10.0)..=(rect.right() - 10.0), avance);
+    ui.painter().circle_filled(pos2(x, rect.center().y), 7.0, Color32::WHITE);
+    if habilitado {
+        respuesta.on_hover_cursor(CursorIcon::PointingHand);
+    }
+    pulsado
+}
+
+/// Lista desplegable con línea inferior y, si se pide, una búsqueda dentro de la lista. Trabaja
+/// con claves de texto; una clave vacía es «ninguna opción». Devuelve verdadero si cambió.
+#[allow(clippy::too_many_arguments)]
+pub fn desplegable(
+    ui: &mut Ui,
+    etiqueta: &str,
+    id: &str,
+    ancho: f32,
+    elegido: &mut String,
+    opciones: &[(String, String)],
+    vacio: &str,
+    permitir_vacio: bool,
+    buscar: Option<&mut String>,
+) -> bool {
+    let mut cambio = false;
+    // Etiqueta encima del campo aunque el desplegable vaya en una fila de filtros.
+    ui.allocate_ui_with_layout(vec2(ancho, 64.0), Layout::top_down(Align::Min), |ui| {
+        ui.set_width(ancho);
+        ui.add_space(6.0);
+        ui.label(RichText::new(etiqueta).size(12.5).color(SALVIA));
+        let id_lista = ui.make_persistent_id(id);
+        let actual = opciones.iter().find(|(clave, _)| clave == elegido).map(|(_, texto)| texto.as_str());
+        let (mostrar, color) = match actual {
+            Some(texto) => (texto, PINO),
+            None => (vacio, SALVIA),
+        };
+        let (rect, respuesta) = ui.allocate_exact_size(vec2(ancho, 30.0), Sense::click());
+        let galeria = linea_de_texto(ui, mostrar, FontId::proportional(16.0), color, ancho - 26.0);
+        ui.painter().galley(pos2(rect.left(), rect.center().y - galeria.size().y / 2.0), galeria, color);
+        // La flecha se dibuja: la fuente de la interfaz no trae «▾» y saldría un cuadro.
+        let (x, y) = (rect.right() - 6.0, rect.center().y);
+        let punta = vec![pos2(x - 4.5, y - 2.5), pos2(x + 4.5, y - 2.5), pos2(x, y + 3.0)];
+        ui.painter().add(egui::Shape::convex_polygon(punta, SALVIA, Stroke::NONE));
+        let abierta = ui.memory(|m| m.is_popup_open(id_lista));
+        let linea = if abierta || respuesta.hovered() { PINO } else { LINEA };
+        let y = rect.bottom() - 1.0;
+        ui.painter().line_segment([pos2(rect.left(), y), pos2(rect.right(), y)], Stroke::new(1.0_f32, linea));
+        let mut recien_abierta = false;
+        if respuesta.clone().on_hover_cursor(CursorIcon::PointingHand).clicked() {
+            recien_abierta = !abierta;
+            ui.memory_mut(|m| m.toggle_popup(id_lista));
+        }
+        egui::popup_below_widget(ui, id_lista, &respuesta, egui::PopupCloseBehavior::CloseOnClickOutside, |ui| {
+            ui.set_min_width(ancho.max(220.0));
+            let filtro = match buscar {
+                Some(texto) => {
+                    if recien_abierta {
+                        texto.clear();
+                    }
+                    let campo = ui.add(
+                        TextEdit::singleline(texto)
+                            .hint_text(RichText::new("Escriba para buscar").color(SALVIA))
+                            .desired_width(ancho.max(220.0) - 12.0),
+                    );
+                    if recien_abierta {
+                        campo.request_focus();
+                    }
+                    crate::models::sin_tildes(texto.trim())
+                }
+                None => String::new(),
+            };
+            egui::ScrollArea::vertical().max_height(280.0).show(ui, |ui| {
+                if permitir_vacio && ui.selectable_label(elegido.is_empty(), vacio).clicked() {
+                    cambio = !elegido.is_empty();
+                    elegido.clear();
+                    ui.memory_mut(|m| m.close_popup());
+                }
+                let mut alguna = false;
+                for (clave, texto) in opciones {
+                    if !filtro.is_empty() && !crate::models::sin_tildes(texto).contains(&filtro) {
+                        continue;
+                    }
+                    alguna = true;
+                    if ui.selectable_label(elegido == clave, texto).clicked() {
+                        cambio |= elegido != clave;
+                        *elegido = clave.clone();
+                        ui.memory_mut(|m| m.close_popup());
+                    }
+                }
+                if !alguna {
+                    ui.label(RichText::new("Sin coincidencias.").color(SALVIA));
+                }
+            });
+        });
+    });
+    cambio
 }
 
 /// Línea de resultado dentro del formulario de ingreso. Reserva su alto para no mover nada.
@@ -180,6 +302,7 @@ pub fn aviso_flotante(contexto: &egui::Context, estado: &AppState) {
         TipoMensaje::Exito => MAIZ,
         TipoMensaje::Error => Color32::from_rgb(244, 138, 110),
         TipoMensaje::Informacion => Color32::from_rgb(158, 182, 170),
+        TipoMensaje::Advertencia => Color32::from_rgb(240, 196, 92),
     };
     let abajo = contexto.screen_rect().bottom() - 28.0 - 44.0 + (1.0 - easing::cubic_out(p)) * 18.0;
     Area::new(Id::new("aviso_area"))
@@ -343,6 +466,24 @@ pub fn tabla(
     columna_estado: Option<usize>,
     resaltar: &dyn Fn(usize) -> f32,
 ) -> Option<usize> {
+    tabla_con_miniaturas(ui, id, columnas, filas, seleccion, columna_estado, resaltar, None)
+}
+
+/// Miniatura de una fila: columna donde va y la textura de cada fila con su tamaño, si la tiene.
+pub type Miniaturas<'a> = (usize, &'a dyn Fn(usize) -> Option<(egui::TextureId, egui::Vec2)>);
+
+/// La misma lista, con una miniatura al comienzo de una columna (la imagen de cada raza).
+#[allow(clippy::too_many_arguments)]
+pub fn tabla_con_miniaturas(
+    ui: &mut Ui,
+    id: &str,
+    columnas: &[Columna],
+    filas: &[Vec<String>],
+    seleccion: Option<usize>,
+    columna_estado: Option<usize>,
+    resaltar: &dyn Fn(usize) -> f32,
+    miniaturas: Option<Miniaturas>,
+) -> Option<usize> {
     let ancho = ui.available_width();
     let total: f32 = columnas.iter().map(|c| c.peso).sum();
     let anchos: Vec<f32> = columnas.iter().map(|c| c.peso / total * ancho).collect();
@@ -385,13 +526,33 @@ pub fn tabla(
             let mut x = rect.left();
             for (j, ancho_col) in anchos.iter().enumerate() {
                 let valor = filas[i].get(j).map(String::as_str).unwrap_or("");
+                let mut desde = x;
+                if let Some((_, textura_de)) = miniaturas.filter(|(columna, _)| *columna == j) {
+                    let cuadro = Rect::from_center_size(pos2(x + 17.0, rect.center().y), vec2(34.0, 34.0));
+                    match textura_de(i) {
+                        Some((textura, tamano)) => {
+                            let escala = (cuadro.width() / tamano.x).min(cuadro.height() / tamano.y);
+                            let ajustado = Rect::from_center_size(cuadro.center(), tamano * escala);
+                            egui::Image::new((textura, ajustado.size())).rounding(4.0).paint_at(ui, ajustado);
+                        }
+                        None => {
+                            ui.painter().rect_stroke(cuadro.shrink(1.0), 4.0, Stroke::new(1.0_f32, LINEA));
+                        }
+                    }
+                    desde += 44.0;
+                }
                 if columna_estado == Some(j) {
-                    if valor != "A" && valor != "Activo" {
-                        punto_inhabilitado(ui, pos2(x, rect.center().y));
+                    match valor {
+                        "A" | "Activo" => {}
+                        "Inhabilitado" | "I" => punto_inhabilitado(ui, pos2(x, rect.center().y)),
+                        otro => {
+                            let g = linea_de_texto(ui, otro, FontId::proportional(15.0), PINO, ancho_col - 14.0);
+                            ui.painter().galley(pos2(x, rect.center().y - g.size().y / 2.0), g, PINO);
+                        }
                     }
                 } else {
-                    let g = linea_de_texto(ui, valor, FontId::proportional(15.0), PINO, ancho_col - 14.0);
-                    ui.painter().galley(pos2(x, rect.center().y - g.size().y / 2.0), g, PINO);
+                    let g = linea_de_texto(ui, valor, FontId::proportional(15.0), PINO, ancho_col - 14.0 - (desde - x));
+                    ui.painter().galley(pos2(desde, rect.center().y - g.size().y / 2.0), g, PINO);
                 }
                 x += ancho_col;
             }

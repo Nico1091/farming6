@@ -10,7 +10,6 @@ use crate::db::vigia::{Accion, Foto, Relacion, TablaViva};
 use eframe::egui::epaint::CubicBezierShape;
 use eframe::egui::{
     self, pos2, vec2, Align2, Color32, FontId, Label, Painter, Pos2, Rect, RichText, Rounding, Sense, Shape, Stroke, Ui,
-    UiBuilder,
 };
 use std::time::Duration;
 
@@ -26,8 +25,16 @@ const BORDE: Color32 = Color32::from_rgb(176, 188, 178);
 const LLAVE: Color32 = Color32::from_rgb(156, 102, 14);
 const SOBRE_PINO: Color32 = Color32::from_rgb(196, 211, 202);
 
-/// perfil y persona quedan a los lados de usuario, que es quien las referencia.
-const ORDEN: [&str; 3] = ["perfil", "usuario", "persona"];
+/// El modelo se lee de izquierda a derecha: cada tabla queda a la derecha de las que referencia.
+const COLUMNAS: [&[&str]; 5] = [
+    &["perfil", "persona", "departamento"],
+    &["usuario", "productor", "municipio"],
+    &["granja", "raza"],
+    &["corral", "lote"],
+    &["lote_corral"],
+];
+const ENTRE_COLUMNAS: f32 = 64.0;
+const ENTRE_BLOQUES: f32 = 22.0;
 
 struct Bloque<'a> {
     tabla: &'a TablaViva,
@@ -45,10 +52,20 @@ fn alto_de(t: &TablaViva) -> f32 {
     CABECERA + FILA * t.columnas.len() as f32 + PIE
 }
 
-fn tablas_en_orden(foto: &Foto) -> Vec<&TablaViva> {
-    let mut tablas: Vec<&TablaViva> = foto.tablas.iter().collect();
-    tablas.sort_by_key(|t| ORDEN.iter().position(|n| *n == t.nombre).unwrap_or(ORDEN.len()));
-    tablas
+/// Reparte las tablas en las cuatro columnas del modelo. Una tabla que no esté en la lista
+/// (por ejemplo, creada por otro programa) va al final de la última columna.
+fn tablas_por_columna(foto: &Foto) -> Vec<Vec<&TablaViva>> {
+    let mut columnas: Vec<Vec<&TablaViva>> =
+        COLUMNAS.iter().map(|nombres| nombres.iter().filter_map(|n| foto.tabla(n)).collect()).collect();
+    let conocidas = |t: &TablaViva| COLUMNAS.iter().any(|nombres| nombres.contains(&t.nombre.as_str()));
+    let ultima = columnas.len() - 1;
+    columnas[ultima].extend(foto.tablas.iter().filter(|t| !conocidas(t)));
+    columnas
+}
+
+fn alto_de_columna(tablas: &[&TablaViva]) -> f32 {
+    let bloques: f32 = tablas.iter().map(|t| alto_de(t)).sum();
+    bloques + ENTRE_BLOQUES * tablas.len().saturating_sub(1) as f32
 }
 
 fn cantidad(n: usize, singular: &str) -> String {
@@ -75,9 +92,13 @@ fn pintar_bloque(pintor: &Painter, b: &Bloque, foto: &Foto) {
 
     let cabecera = Rect::from_min_size(r.min, vec2(r.width(), CABECERA));
     pintor.rect_filled(cabecera, solo_arriba(), PINO);
-    pintor.text(pos2(r.left() + 12.0, cabecera.center().y), Align2::LEFT_CENTER, &t.nombre, liviana(20.0), HOJA);
     let cuantas = cantidad(t.filas.len(), "fila");
-    pintor.text(pos2(r.right() - 12.0, cabecera.center().y), Align2::RIGHT_CENTER, cuantas, FontId::proportional(13.0), SOBRE_PINO);
+    let contador = pintor.text(pos2(r.right() - 12.0, cabecera.center().y), Align2::RIGHT_CENTER, cuantas, FontId::proportional(13.0), SOBRE_PINO);
+    let hueco = contador.left() - r.left() - 22.0;
+    let tamano = if t.nombre.chars().count() > 12 { 17.0 } else { 20.0 };
+    let nombre = pintor.layout_no_wrap(t.nombre.clone(), liviana(tamano), HOJA);
+    let nombre = if nombre.size().x > hueco { pintor.layout_no_wrap(t.nombre.clone(), liviana(14.0), HOJA) } else { nombre };
+    pintor.galley(pos2(r.left() + 12.0, cabecera.center().y - nombre.size().y / 2.0), nombre, HOJA);
 
     for (i, c) in t.columnas.iter().enumerate() {
         let y = r.top() + CABECERA + FILA * i as f32;
@@ -99,9 +120,12 @@ fn pintar_bloque(pintor: &Painter, b: &Bloque, foto: &Foto) {
         pintor.text(centro, Align2::CENTER_CENTER, llave, FontId::proportional(11.5), LLAVE);
         let color = if c.llave_primaria || c.foranea.is_some() { PINO } else { SALVIA };
         let texto = fila.left_center() + vec2(ANCHO_LLAVE + 10.0, 0.0);
-        pintor.text(texto, Align2::LEFT_CENTER, &c.nombre, FontId::proportional(LETRA), color);
+        let nombre = pintor.text(texto, Align2::LEFT_CENTER, &c.nombre, FontId::proportional(LETRA), color);
         let tipo = fila.right_center() - vec2(12.0, 0.0);
-        pintor.text(tipo, Align2::RIGHT_CENTER, c.tipo.to_lowercase(), FontId::proportional(12.0), SALVIA);
+        let galeria = pintor.layout_no_wrap(c.tipo.to_lowercase(), FontId::proportional(12.0), SALVIA);
+        if tipo.x - galeria.size().x > nombre.right() + 6.0 {
+            pintor.galley(pos2(tipo.x - galeria.size().x, tipo.y - galeria.size().y / 2.0), galeria, SALVIA);
+        }
     }
     let x_llave = r.left() + ANCHO_LLAVE;
     let fin_filas = r.bottom() - PIE;
@@ -189,49 +213,57 @@ fn diagrama(ui: &mut Ui, foto: &Foto) {
         return;
     }
     let ancho = ui.available_width();
-    let tablas = tablas_en_orden(foto);
-    let espacio = 84.0;
-    let cuantas = tablas.len() as f32;
-    let ancho_bloque = ((ancho - espacio * (cuantas - 1.0)) / cuantas).clamp(150.0, 300.0);
+    let columnas = tablas_por_columna(foto);
+    let cuantas = columnas.len() as f32;
+    let ancho_bloque = ((ancho - ENTRE_COLUMNAS * (cuantas - 1.0)) / cuantas).clamp(170.0, 320.0);
 
     let (respuesta, pintor) = ui.allocate_painter(vec2(ancho, alto_del_diagrama(foto)), Sense::hover());
     let origen = respuesta.rect.min;
-    let bloques: Vec<Bloque> = tablas
-        .iter()
-        .copied()
-        .enumerate()
-        .map(|(i, tabla)| {
-            let esquina = origen + vec2(i as f32 * (ancho_bloque + espacio), 0.0);
-            Bloque { tabla, rect: Rect::from_min_size(esquina, vec2(ancho_bloque, alto_de(tabla))) }
-        })
-        .collect();
-    for bloque in &bloques {
-        pintar_bloque(&pintor, bloque, foto);
+    let mut bloques: Vec<Bloque> = Vec::new();
+    for (i, tablas) in columnas.iter().enumerate() {
+        let mut y = 0.0;
+        for tabla in tablas.iter().copied() {
+            let esquina = origen + vec2(i as f32 * (ancho_bloque + ENTRE_COLUMNAS), y);
+            bloques.push(Bloque { tabla, rect: Rect::from_min_size(esquina, vec2(ancho_bloque, alto_de(tabla))) });
+            y += alto_de(tabla) + ENTRE_BLOQUES;
+        }
     }
     let tiempo = ui.input(|i| i.time) as f32;
     for relacion in &foto.relaciones {
         pintar_relacion(&pintor, &bloques, relacion, foto, tiempo);
     }
+    for bloque in &bloques {
+        pintar_bloque(&pintor, bloque, foto);
+    }
     leyenda(&pintor, pos2(respuesta.rect.left(), respuesta.rect.bottom() - ALTO_LEYENDA / 2.0));
 }
 
 fn alto_del_diagrama(foto: &Foto) -> f32 {
-    foto.tablas.iter().map(alto_de).fold(0.0, f32::max) + ALTO_LEYENDA + 10.0
+    tablas_por_columna(foto).iter().map(|c| alto_de_columna(c)).fold(0.0, f32::max) + ALTO_LEYENDA + 14.0
 }
 
-fn lista_de_cambios(ui: &mut Ui, foto: &Foto, maximo: usize) {
+/// Los últimos cambios guardados, uno al lado del otro y el más reciente a la izquierda.
+fn franja_de_cambios(ui: &mut Ui, foto: &Foto) {
+    ui.label(RichText::new("Últimos cambios").size(13.0).color(SALVIA));
+    ui.add_space(4.0);
     if foto.cambios.is_empty() {
         ui.label(RichText::new("Cada cambio guardado aparece aquí al instante.").size(13.0).color(SALVIA));
+        ui.add_space(21.0);
         return;
     }
-    ui.spacing_mut().item_spacing.y = 1.0;
-    for cambio in foto.cambios.iter().take(maximo) {
+    let ancho = ui.available_width();
+    let cuantos = ((ancho / 250.0).floor() as usize).clamp(1, 6);
+    let ancho_de_cada = ancho / cuantos as f32;
+    let (zona, _) = ui.allocate_exact_size(vec2(ancho, 40.0), Sense::hover());
+    for (i, cambio) in foto.cambios.iter().take(cuantos).enumerate() {
+        let x = zona.left() + i as f32 * ancho_de_cada;
         let color = if cambio.accion == Accion::Inhabilitar || cambio.accion == Accion::Borrar { ARCILLA } else { PINO };
         let titulo = format!("{} {} {}", cambio.accion.texto(), cambio.tabla, cambio.clave);
-        ui.add(Label::new(RichText::new(titulo).size(14.0).color(color)).truncate());
+        let g = linea_de_texto(ui, &titulo, FontId::proportional(14.0), color, ancho_de_cada - 18.0);
+        ui.painter().galley(pos2(x, zona.top()), g, color);
         let pie = format!("{}  {}", cambio.hora, cambio.detalle);
-        ui.add(Label::new(RichText::new(pie).size(12.5).color(SALVIA)).truncate());
-        ui.add_space(9.0);
+        let g = linea_de_texto(ui, &pie, FontId::proportional(12.5), SALVIA, ancho_de_cada - 18.0);
+        ui.painter().galley(pos2(x, zona.top() + 20.0), g, SALVIA);
     }
 }
 
@@ -246,15 +278,18 @@ fn pedir_repintado(ui: &Ui, foto: &Foto) {
 
 fn peso_de(columna: &str) -> f32 {
     match columna {
-        "correo" | "contrasena" | "descripc" => 2.4,
-        "direccion" | "nombreu" => 1.6,
+        "correo" | "contrasena" | "descripc" | "observaciones" => 2.4,
+        "imagen" | "descripcion" => 2.2,
+        "direccion" | "nombreu" | "nombre" | "vereda" => 1.6,
+        "fecha_asignacion" | "fecha_registro" | "fecha_inicial" | "fecha_final" | "fecha_cierre" => 1.3,
         "estado" => 1.0,
         _ => 1.2,
     }
 }
 
-/// Registros de una tabla en una rejilla, con línea entre cada fila y cada columna.
-fn rejilla(ui: &mut Ui, t: &TablaViva, foto: &Foto) {
+/// Registros de una tabla en una rejilla, con línea entre cada fila y cada columna. Solo se
+/// pintan las filas que se ven: el catálogo de municipios tiene 1.122.
+pub(super) fn rejilla(ui: &mut Ui, t: &TablaViva, foto: &Foto) {
     let ancho = ui.available_width();
     let total: f32 = t.columnas.iter().map(|c| peso_de(&c.nombre)).sum();
     let anchos: Vec<f32> = t.columnas.iter().map(|c| peso_de(&c.nombre) / total * ancho).collect();
@@ -264,13 +299,19 @@ fn rejilla(ui: &mut Ui, t: &TablaViva, foto: &Foto) {
     pintor.rect_filled(rect, REDONDEO, HOJA);
     pintor.rect_filled(Rect::from_min_size(rect.min, vec2(ancho, ALTO_CELDA)), solo_arriba(), PINO);
 
+    let visible = ui.clip_rect();
+    let primera = (((visible.top() - rect.top()) / ALTO_CELDA).floor() as isize - 1).max(0) as usize;
+    let ultima = ((((visible.bottom() - rect.top()) / ALTO_CELDA).ceil() as isize).max(0) as usize).min(t.filas.len());
+    let a_la_vista = primera.min(ultima)..ultima;
+
     let renglon = |i: usize| Rect::from_min_size(rect.min + vec2(0.0, ALTO_CELDA * (i as f32 + 1.0)), vec2(ancho, ALTO_CELDA));
-    for (i, fila) in t.filas.iter().enumerate() {
+    for i in a_la_vista.clone() {
         let r = renglon(i);
         if i % 2 == 1 {
             pintor.rect_filled(r, 0.0, NIEBLA);
         }
-        let destello = foto.resaltado_fila(&t.nombre, &fila[0]);
+        let clave = t.claves.get(i).map(String::as_str).unwrap_or("");
+        let destello = foto.resaltado_fila(&t.nombre, clave);
         if destello > 0.0 {
             pintor.rect_filled(r, 0.0, MAIZ.gamma_multiply(0.28 * destello));
         }
@@ -284,8 +325,8 @@ fn rejilla(ui: &mut Ui, t: &TablaViva, foto: &Foto) {
         let hueco = ancho_col - 16.0;
         let g = linea_de_texto(ui, &columna.nombre, FontId::proportional(13.5), HOJA, hueco);
         pintor.galley(pos2(x + 8.0, rect.top() + (ALTO_CELDA - g.size().y) / 2.0), g, HOJA);
-        for (i, fila) in t.filas.iter().enumerate() {
-            let valor = fila.get(j).map(String::as_str).unwrap_or("");
+        for i in a_la_vista.clone() {
+            let valor = t.filas[i].get(j).map(String::as_str).unwrap_or("");
             let g = linea_de_texto(ui, valor, FontId::proportional(14.0), PINO, hueco);
             pintor.galley(pos2(x + 8.0, renglon(i).center().y - g.size().y / 2.0), g, PINO);
         }
@@ -301,7 +342,7 @@ fn rejilla(ui: &mut Ui, t: &TablaViva, foto: &Foto) {
 }
 
 fn pestanas(ui: &mut Ui, foto: &Foto, elegida: &mut usize) {
-    ui.horizontal(|ui| {
+    ui.horizontal_wrapped(|ui| {
         ui.spacing_mut().item_spacing.x = 22.0;
         for (i, t) in foto.tablas.iter().enumerate() {
             let color = if *elegida == i { PINO } else { SALVIA };
@@ -322,7 +363,7 @@ fn pestanas(ui: &mut Ui, foto: &Foto, elegida: &mut usize) {
     });
 }
 
-/// Pantalla Base de datos: el modelo, los cambios y las filas de cada tabla.
+/// Pantalla Base de datos: la consulta, los cambios, el modelo y las filas de cada tabla.
 pub fn pantalla(ui: &mut Ui, estado: &mut AppState) {
     let foto = estado.foto_actual();
     egui::ScrollArea::vertical().id_salt("pagina_mapa").auto_shrink([false, false]).show(ui, |ui| {
@@ -334,18 +375,12 @@ pub fn pantalla(ui: &mut Ui, estado: &mut AppState) {
         });
         ui.add_space(22.0);
 
-        let ancho = ui.available_width();
-        let (zona, _) = ui.allocate_exact_size(vec2(ancho, alto_del_diagrama(&foto)), Sense::hover());
-        let izquierda = Rect::from_min_size(zona.min, vec2(ancho - 332.0, zona.height()));
-        let derecha = Rect::from_min_max(pos2(zona.right() - 276.0, zona.top()), zona.max);
-        ui.allocate_new_ui(UiBuilder::new().max_rect(izquierda), |ui| diagrama(ui, &foto));
-        ui.allocate_new_ui(UiBuilder::new().max_rect(derecha), |ui| {
-            ui.label(RichText::new("Últimos cambios").size(13.0).color(SALVIA));
-            ui.add_space(6.0);
-            egui::ScrollArea::vertical().id_salt("cambios_pagina").auto_shrink([false, false]).show(ui, |ui| {
-                lista_de_cambios(ui, &foto, 30);
-            });
-        });
+        super::consulta::seccion(ui, estado, &foto);
+        ui.add_space(30.0);
+
+        franja_de_cambios(ui, &foto);
+        ui.add_space(18.0);
+        diagrama(ui, &foto);
 
         ui.add_space(26.0);
         pestanas(ui, &foto, &mut estado.tabla_del_mapa);
